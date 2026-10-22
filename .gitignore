@@ -1,0 +1,25 @@
+# OS & IDE
+.DS_Store
+.idea/
+*.iml
+.vscode/
+
+# Android
+.gradle/
+**/build/
+*.apk
+*.aab
+.kotlin/
+local.properties
+
+# Web / Node
+node_modules/
+dist/
+dist-ssr/
+*.log
+
+# Screenshots
+emulator_screen.png
+app_running.png
+app_live_albums.png
+app_final_screen.png
