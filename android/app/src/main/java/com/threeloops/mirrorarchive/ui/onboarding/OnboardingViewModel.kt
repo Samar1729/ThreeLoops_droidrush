@@ -1,0 +1,64 @@
+package com.threeloops.mirrorarchive.ui.onboarding
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.threeloops.mirrorarchive.permissions.OnboardingPrefs
+import com.threeloops.mirrorarchive.permissions.PermissionManager
+import com.threeloops.mirrorarchive.permissions.PermissionState
+import com.threeloops.mirrorarchive.ui.permission.PermissionUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * ViewModel managing the onboarding privacy presentation and permission request.
+ *
+ * Exposes [uiState] mapping the platform permission state to [PermissionUiState].
+ */
+@HiltViewModel
+class OnboardingViewModel @Inject constructor(
+    private val permissionManager: PermissionManager,
+    private val onboardingPrefs: OnboardingPrefs
+) : ViewModel() {
+
+    /**
+     * UI state representing the current permission status during onboarding.
+     */
+    val uiState: StateFlow<PermissionUiState> = permissionManager.stateFlow()
+        .map { state ->
+            when (state) {
+                PermissionState.GRANTED_FULL -> PermissionUiState.Granted
+                PermissionState.GRANTED_PARTIAL -> PermissionUiState.Partial
+                PermissionState.DENIED -> PermissionUiState.Denied
+                PermissionState.DENIED_PERMANENTLY -> PermissionUiState.PermanentlyDenied
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = PermissionUiState.Loading
+        )
+
+    /**
+     * Returns the array of platform permissions required on this device's API level.
+     */
+    fun requiredPermissions(): Array<String> = permissionManager.requiredPermissions()
+
+    /**
+     * Processes the user's response to the system permission request prompt.
+     *
+     * Persists the askedBefore flag, marks onboarding as complete, and triggers state refresh.
+     *
+     * @param result Mapping of permission names to grant booleans.
+     */
+    fun onPermissionResult(result: Map<String, Boolean>) {
+        viewModelScope.launch {
+            permissionManager.markAsked()
+            onboardingPrefs.markDone()
+            permissionManager.refresh()
+        }
+    }
+}
