@@ -18,7 +18,8 @@ object AlbumClassifier {
     fun classify(
         labels: List<LabelResult>,
         path: String,
-        ocr: String
+        ocr: String,
+        faceCount: Int = 0
     ): Set<AlbumType> = emptySet()
 
     /**
@@ -27,11 +28,13 @@ object AlbumClassifier {
      * @param labels Detected image labels.
      * @param path File path or display name.
      * @param ocr Extracted OCR text string.
+     * @param faceCount Detected face count.
      * @return Human-readable explanation string.
      */
     fun explain(
         labels: List<LabelResult>,
         path: String,
-        ocr: String
+        ocr: String,
+        faceCount: Int = 0
     ): String = ""
 }
