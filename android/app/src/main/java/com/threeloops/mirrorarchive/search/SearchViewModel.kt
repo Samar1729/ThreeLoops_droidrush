@@ -2,7 +2,7 @@ package com.threeloops.mirrorarchive.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.threeloops.mirrorarchive.data.model.ImageItem
+import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview

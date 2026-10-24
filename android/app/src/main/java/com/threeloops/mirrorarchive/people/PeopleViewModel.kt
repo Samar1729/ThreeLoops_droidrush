@@ -2,8 +2,8 @@ package com.threeloops.mirrorarchive.people
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.threeloops.mirrorarchive.data.model.FaceInfo
-import com.threeloops.mirrorarchive.data.model.ImageItem
+import com.threeloops.mirrorarchive.contracts.FaceInfo
+import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

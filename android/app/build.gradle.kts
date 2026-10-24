@@ -1,8 +1,9 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -57,50 +58,54 @@ android {
 
 dependencies {
     // AndroidX & Jetpack Compose
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("androidx.activity:activity-compose:1.10.0")
-    implementation(platform("androidx.compose:compose-bom:2024.12.01"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.navigation:navigation-compose:2.8.5")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.navigation.compose)
+
+    // Hilt Dependency Injection (+ KSP)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
     // Image Loading (Coil)
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation(libs.coil.compose)
 
-    // Section 11: Bundled ML Kit Artifacts (0 Internet permission)
-    implementation("com.google.mlkit:image-labeling:17.0.9")
-    implementation("com.google.mlkit:face-detection:16.1.7")
-    implementation("com.google.mlkit:text-recognition:16.0.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    // Room Database + KSP
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
-    // WorkManager (Section 3.6 & 3.17)
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    // SQLCipher Encrypted DB
+    implementation(libs.sqlcipher.android)
+    implementation(libs.androidx.sqlite)
 
-    // Room Database + SQLite (Section 3.4)
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
-
-    // SQLCipher Encrypted DB (Section 3.18)
-    implementation("net.zetetic:sqlcipher-android:4.6.1@aar")
-    implementation("androidx.sqlite:sqlite:2.4.0")
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
 
     // DataStore Preferences
-    implementation("androidx.datastore:datastore-preferences:1.1.2")
+    implementation(libs.androidx.datastore.preferences)
+
+    // Bundled ML Kit Artifacts (0 Internet permission, NOT play-services variants)
+    implementation(libs.mlkit.image.labeling)
+    implementation(libs.mlkit.face.detection)
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Testing
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

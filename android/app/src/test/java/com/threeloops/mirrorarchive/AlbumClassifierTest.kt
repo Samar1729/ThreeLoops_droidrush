@@ -1,8 +1,8 @@
 package com.threeloops.mirrorarchive
 
 import com.threeloops.mirrorarchive.albums.AlbumClassifier
-import com.threeloops.mirrorarchive.data.model.AlbumType
-import com.threeloops.mirrorarchive.data.model.LabelResult
+import com.threeloops.mirrorarchive.contracts.AlbumType
+import com.threeloops.mirrorarchive.contracts.LabelResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
