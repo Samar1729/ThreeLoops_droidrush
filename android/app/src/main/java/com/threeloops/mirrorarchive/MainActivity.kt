@@ -7,13 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,8 +25,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.threeloops.mirrorarchive.ui.navigation.AppNavigationState
+import com.threeloops.mirrorarchive.ui.navigation.MainViewModel
 import com.threeloops.mirrorarchive.ui.navigation.MirrorArchiveBottomBar
 import com.threeloops.mirrorarchive.ui.navigation.Routes
+import com.threeloops.mirrorarchive.ui.onboarding.OnboardingScreen
+import com.threeloops.mirrorarchive.ui.permission.PermissionDeniedScreen
 import com.threeloops.mirrorarchive.ui.theme.MirrorArchiveTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -43,35 +51,96 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Root navigation container with bottom tabs and NavHost.
+ * Root navigation container with bottom tabs, dynamic start destination, and NavHost.
  *
  * @param navController Navigation controller managing back stack.
+ * @param viewModel MainViewModel providing reactive app gate state.
  */
 @Composable
-fun MainNavigationApp(navController: NavHostController = rememberNavController()) {
+fun MainNavigationApp(
+    navController: NavHostController = rememberNavController(),
+    viewModel: MainViewModel = hiltViewModel()
+) {
+    val navState by viewModel.navigationState.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    Scaffold(
-        bottomBar = {
-            MirrorArchiveBottomBar(
-                currentRoute = currentRoute,
-                onNavigate = { route ->
-                    navController.navigate(route) {
-                        popUpTo(Routes.ALBUMS) {
-                            saveState = true
-                        }
+    // Show loading spinner while reading initial onboarding & permission states
+    if (navState is AppNavigationState.Loading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
+        return
+    }
+
+    // Determine initial start destination based on gate rules:
+    // onboarding not done -> onboarding;
+    // else state not FULL/PARTIAL -> permission_denied;
+    // else -> albums.
+    val calculatedStartDestination = when (navState) {
+        AppNavigationState.Onboarding -> Routes.ONBOARDING
+        AppNavigationState.PermissionDenied -> Routes.PERMISSION_DENIED
+        AppNavigationState.Ready, AppNavigationState.Loading -> Routes.ALBUMS
+    }
+
+    // Reactive automatic re-routing when stateFlow changes (e.g., returning from Settings)
+    LaunchedEffect(navState) {
+        when (navState) {
+            AppNavigationState.Loading -> Unit
+            AppNavigationState.Onboarding -> {
+                if (currentRoute != null && currentRoute != Routes.ONBOARDING) {
+                    navController.navigate(Routes.ONBOARDING) {
+                        popUpTo(0) { inclusive = true }
                         launchSingleTop = true
-                        restoreState = true
                     }
                 }
-            )
+            }
+            AppNavigationState.PermissionDenied -> {
+                if (currentRoute != null && currentRoute != Routes.PERMISSION_DENIED) {
+                    navController.navigate(Routes.PERMISSION_DENIED) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            AppNavigationState.Ready -> {
+                if (currentRoute == Routes.ONBOARDING || currentRoute == Routes.PERMISSION_DENIED) {
+                    navController.navigate(Routes.ALBUMS) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
+    }
+
+    val isGateScreen = currentRoute == Routes.ONBOARDING || currentRoute == Routes.PERMISSION_DENIED
+
+    Scaffold(
+        bottomBar = {
+            if (!isGateScreen) {
+                MirrorArchiveBottomBar(
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            popUpTo(Routes.ALBUMS) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.ALBUMS,
+            startDestination = calculatedStartDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
             // Three main bottom tabs
@@ -103,11 +172,37 @@ fun MainNavigationApp(navController: NavHostController = rememberNavController()
 
             // Onboarding & Permission destinations
             composable(Routes.ONBOARDING) {
-                PlaceholderScreen(name = "onboarding")
+                OnboardingScreen(
+                    onGranted = {
+                        navController.navigate(Routes.ALBUMS) {
+                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onDenied = {
+                        navController.navigate(Routes.PERMISSION_DENIED) {
+                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
 
             composable(Routes.PERMISSION_DENIED) {
-                PlaceholderScreen(name = "permission_denied")
+                PermissionDeniedScreen(
+                    onGranted = {
+                        navController.navigate(Routes.ALBUMS) {
+                            popUpTo(Routes.PERMISSION_DENIED) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onContinueWithPartial = {
+                        navController.navigate(Routes.ALBUMS) {
+                            popUpTo(Routes.PERMISSION_DENIED) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
 
             // Detail destinations (arguments are IDs only)
