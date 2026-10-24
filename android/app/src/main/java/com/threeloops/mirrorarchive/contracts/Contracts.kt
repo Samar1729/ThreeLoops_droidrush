@@ -111,6 +111,12 @@ data class ImageItem(
 )
 
 /**
+ * Display name extracted or derived from the URI string.
+ */
+val ImageItem.displayName: String
+    get() = uri.substringAfterLast('/')
+
+/**
  * Aggregated summary for a smart album category.
  *
  * @property type The smart album category.
