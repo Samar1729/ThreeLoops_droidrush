@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 fun SettingsScreen(
     onBackClick: () -> Unit,
     onNavigateMetrics: () -> Unit,
+    onLockVault: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -109,6 +110,64 @@ fun SettingsScreen(
                 }
             }
 
+            // Security & Passcode Vault Card
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFF18181B),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFF27272A), RoundedCornerShape(16.dp))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.Lock,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Vault Authentication",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Hardware Biometrics: Face ID / Fingerprint Active",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFE4E4E7)
+                    )
+                    Text(
+                        text = "Fallback Passcode: 6-digit numeric PIN",
+                        fontSize = 12.sp,
+                        color = Color(0xFFA1A1AA),
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = onLockVault,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF27272A)),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Lock Vault Now",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFFFF453A)
+                        )
+                    }
+                }
+            }
+
             // Storage Card
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -132,7 +191,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Total Indexed", fontSize = 13.sp, color = Color(0xFFA1A1AA))
-                        Text(text = "128 Photos", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        Text(text = "26 Photos", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
@@ -140,7 +199,7 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Index Size", fontSize = 13.sp, color = Color(0xFFA1A1AA))
-                        Text(text = "3.8 MB", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        Text(text = "4.2 MB", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
                     }
                 }
             }

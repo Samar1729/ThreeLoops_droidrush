@@ -38,6 +38,7 @@ fun AlbumsScreen(
     onAlbumClick: (AlbumType) -> Unit,
     onNavigateDuplicates: () -> Unit,
     onNavigateStorageSaver: () -> Unit,
+    onNavigateSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val summaries by viewModel.albumSummaries.collectAsState()
@@ -99,6 +100,21 @@ fun AlbumsScreen(
                     Icon(
                         imageVector = Icons.Outlined.CleaningServices,
                         contentDescription = "Storage Saver",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                IconButton(
+                    onClick = onNavigateSettings,
+                    modifier = Modifier
+                        .size(38.dp)
+                        .background(Color(0xFF1C1C1E), CircleShape)
+                        .border(1.dp, Color(0xFF2C2C2E), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Settings,
+                        contentDescription = "Settings",
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )

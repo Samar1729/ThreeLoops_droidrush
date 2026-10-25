@@ -1,7 +1,6 @@
 package com.threeloops.mirrorarchive
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -14,8 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -28,6 +31,7 @@ import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.ui.albums.AlbumDetailScreen
 import com.threeloops.mirrorarchive.ui.albums.AlbumsScreen
 import com.threeloops.mirrorarchive.ui.albums.AlbumsViewModel
+import com.threeloops.mirrorarchive.ui.auth.AuthScreen
 import com.threeloops.mirrorarchive.ui.dupes.DuplicatesScreen
 import com.threeloops.mirrorarchive.ui.imagedetail.ImageDetailScreen
 import com.threeloops.mirrorarchive.ui.metrics.MetricsScreen
@@ -48,7 +52,7 @@ import dagger.hilt.android.AndroidEntryPoint
  * Main activity hosting the Navigation Compose shell.
  */
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -74,6 +78,15 @@ fun MainNavigationApp(
     val navState by viewModel.navigationState.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    var isVaultUnlocked by rememberSaveable { mutableStateOf(false) }
+
+    if (!isVaultUnlocked) {
+        AuthScreen(
+            onAuthenticated = { isVaultUnlocked = true }
+        )
+        return
+    }
 
     // Show loading spinner while reading initial onboarding & permission states
     if (navState is AppNavigationState.Loading) {
@@ -165,6 +178,9 @@ fun MainNavigationApp(
                     },
                     onNavigateStorageSaver = {
                         navController.navigate(Routes.STORAGE_SAVER)
+                    },
+                    onNavigateSettings = {
+                        navController.navigate(Routes.SETTINGS)
                     }
                 )
             }
@@ -323,7 +339,8 @@ fun MainNavigationApp(
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     onBackClick = { navController.popBackStack() },
-                    onNavigateMetrics = { navController.navigate(Routes.METRICS) }
+                    onNavigateMetrics = { navController.navigate(Routes.METRICS) },
+                    onLockVault = { isVaultUnlocked = false }
                 )
             }
 

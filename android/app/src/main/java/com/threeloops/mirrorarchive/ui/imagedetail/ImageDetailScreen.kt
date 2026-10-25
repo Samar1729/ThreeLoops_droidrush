@@ -168,7 +168,14 @@ fun ImageDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf("On-device Indexed", "Sharp Focus", "Auto-organized").forEach { tag ->
+                        val tags = mutableListOf("On-device Indexed", "Sharp Focus")
+                        if (image.faceCount > 0) {
+                            tags.add("People (${image.faceCount} ${if (image.faceCount == 1) "Face" else "Faces"})")
+                            tags.add("High-Accuracy ML Kit")
+                        } else {
+                            tags.add("Auto-categorized")
+                        }
+                        tags.forEach { tag ->
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
@@ -182,6 +189,53 @@ fun ImageDetailScreen(
                                     color = Color(0xFFE4E4E7)
                                 )
                             }
+                        }
+                    }
+                }
+            }
+
+            if (image.faceCount > 0) {
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF18181B),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFF27272A), RoundedCornerShape(14.dp))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Facial Analysis",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Faces Detected", fontSize = 13.sp, color = Color(0xFFA1A1AA))
+                            Text(text = "${image.faceCount}", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Detection Mode", fontSize = 13.sp, color = Color(0xFFA1A1AA))
+                            Text(text = "High Precision (Accurate)", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Landmarks & Attributes", fontSize = 13.sp, color = Color(0xFFA1A1AA))
+                            Text(text = "Eyes, Smile & Contours", fontSize = 13.sp, color = Color(0xFF34C759), fontWeight = FontWeight.Medium)
                         }
                     }
                 }

@@ -101,6 +101,9 @@ dependencies {
     implementation(libs.mlkit.text.recognition)
     implementation(libs.kotlinx.coroutines.play.services)
 
+    // Biometric & Hardware Authentication
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

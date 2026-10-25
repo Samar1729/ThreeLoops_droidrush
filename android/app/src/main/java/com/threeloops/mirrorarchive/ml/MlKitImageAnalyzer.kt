@@ -17,6 +17,7 @@ import javax.inject.Singleton
 /**
  * Production on-device ML Kit image analyzer.
  * Uses bundled offline models with zero network permissions.
+ * Optimized with high-accuracy facial landmark tracking and classification.
  */
 @Singleton
 class MlKitImageAnalyzer @Inject constructor() : ImageAnalyzer {
@@ -24,15 +25,18 @@ class MlKitImageAnalyzer @Inject constructor() : ImageAnalyzer {
     private val labeler by lazy {
         ImageLabeling.getClient(
             ImageLabelerOptions.Builder()
-                .setConfidenceThreshold(0.6f)
+                .setConfidenceThreshold(0.55f)
                 .build()
         )
     }
 
     private val faceDetector by lazy {
         val options = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+            .setMinFaceSize(0.08f)
+            .enableTracking()
             .build()
         FaceDetection.getClient(options)
     }
@@ -44,32 +48,48 @@ class MlKitImageAnalyzer @Inject constructor() : ImageAnalyzer {
     private val textLikeKeywords = setOf(
         "text", "font", "document", "paper", "receipt", "invoice", "menu",
         "bill", "ticket", "newspaper", "book", "handwriting", "screenshot",
-        "label", "poster", "presentation", "signage", "blackboard", "whiteboard"
+        "label", "poster", "presentation", "signage", "blackboard", "whiteboard",
+        "diagram", "number", "writing"
     )
 
     override suspend fun labels(bmp: Bitmap): List<LabelResult> {
         val image = InputImage.fromBitmap(bmp, 0)
         val rawLabels = labeler.process(image).await()
         return rawLabels
-            .filter { it.confidence >= 0.6f }
+            .filter { it.confidence >= 0.55f }
             .map { LabelResult(text = it.text.lowercase().trim(), confidence = it.confidence) }
             .distinctBy { it.text }
     }
 
     override suspend fun faces(bmp: Bitmap): List<FaceInfo> {
         val image = InputImage.fromBitmap(bmp, 0)
-        val detected = faceDetector.process(image).await()
+        var detected = faceDetector.process(image).await()
+
+        // If no faces detected on first pass, attempt 90-degree check for rotated camera frames
+        if (detected.isEmpty() && bmp.width != bmp.height) {
+            val rotatedImage = InputImage.fromBitmap(bmp, 90)
+            val rotatedDetected = faceDetector.process(rotatedImage).await()
+            if (rotatedDetected.isNotEmpty()) {
+                detected = rotatedDetected
+            }
+        }
+
         return detected.map { face ->
+            val leftEye = face.leftEyeOpenProbability?.takeIf { it >= 0f }
+            val rightEye = face.rightEyeOpenProbability?.takeIf { it >= 0f }
+            val smile = face.smilingProbability?.takeIf { it >= 0f }
+
+            val combinedEyes = when {
+                leftEye != null && rightEye != null -> (leftEye + rightEye) / 2f
+                leftEye != null -> leftEye
+                rightEye != null -> rightEye
+                else -> null
+            }
+
             FaceInfo(
                 box = face.boundingBox,
-                smileProb = face.smilingProbability,
-                eyesOpenProb = when {
-                    face.leftEyeOpenProbability != null && face.rightEyeOpenProbability != null ->
-                        (face.leftEyeOpenProbability!! + face.rightEyeOpenProbability!!) / 2f
-                    face.leftEyeOpenProbability != null -> face.leftEyeOpenProbability
-                    face.rightEyeOpenProbability != null -> face.rightEyeOpenProbability
-                    else -> null
-                }
+                smileProb = smile,
+                eyesOpenProb = combinedEyes
             )
         }
     }
