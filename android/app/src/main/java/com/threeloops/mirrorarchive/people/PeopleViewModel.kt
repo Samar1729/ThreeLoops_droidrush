@@ -5,15 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.threeloops.mirrorarchive.contracts.FaceInfo
 import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import javax.inject.Inject
 
 /**
  * 3.10 Faces & People
  * Owner: Aditya
  */
-class PeopleViewModel(
+@HiltViewModel
+class PeopleViewModel @Inject constructor(
     private val repository: ImageRepository
 ) : ViewModel() {
 
