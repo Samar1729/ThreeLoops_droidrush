@@ -20,9 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.threeloops.mirrorarchive.data.model.ImageItem
+import com.threeloops.mirrorarchive.contracts.ImageItem
+import com.threeloops.mirrorarchive.contracts.displayName
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ImageDetailScreen(
     image: ImageItem,
@@ -31,36 +32,65 @@ fun ImageDetailScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(text = image.displayName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
+    Column(
         modifier = modifier
-    ) { innerPadding ->
+            .fillMaxSize()
+            .background(Color(0xFF0C0C0E))
+    ) {
+        // Top Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(Color(0xFF1C1C1E), CircleShape)
+                    .border(1.dp, Color(0xFF2C2C2E), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column {
+                Text(
+                    text = image.displayName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    maxLines = 1
+                )
+                Text(
+                    text = "${image.width} × ${image.height} • ${"%.1f".format(image.sizeBytes / (1024.0 * 1024.0))} MB",
+                    fontSize = 12.sp,
+                    color = Color(0xFFA1A1AA)
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Photo Container
+            // Main Photo Canvas
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(340.dp)
+                    .heightIn(min = 260.dp, max = 420.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.Black)
+                    .background(Color(0xFF18181B))
+                    .border(1.dp, Color(0xFF27272A), RoundedCornerShape(16.dp))
             ) {
                 AsyncImage(
                     model = image.uri,
@@ -70,107 +100,89 @@ fun ImageDetailScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // Albums
-            if (image.albums.isNotEmpty()) {
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "Albums",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        ) {
-                            image.albums.forEach { album ->
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = MaterialTheme.colorScheme.primary
-                                ) {
-                                    Text(
-                                        text = album.name.lowercase().replaceFirstChar { it.uppercase() },
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                    )
-                                }
-                            }
+            // Metadata card
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF18181B),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFF27272A), RoundedCornerShape(14.dp))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Properties",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(text = "Resolution", fontSize = 12.sp, color = Color(0xFF71717A))
+                            Text(text = "${image.width} × ${image.height}", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        }
+                        Column {
+                            Text(text = "Sharpness", fontSize = 12.sp, color = Color(0xFF71717A))
+                            Text(text = "${image.blurScore.toInt()}", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        }
+                        Column {
+                            Text(text = "Faces", fontSize = 12.sp, color = Color(0xFF71717A))
+                            Text(text = "${image.faceCount}", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
+                        }
+                        Column {
+                            Text(text = "Storage", fontSize = 12.sp, color = Color(0xFF71717A))
+                            Text(text = "${"%.1f".format(image.sizeBytes / (1024.0 * 1024.0))} MB", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
             }
 
-            // Labels
-            if (image.labels.isNotEmpty()) {
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "Labels",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            image.labels.forEach { label ->
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.background,
-                                    modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                                ) {
-                                    Text(
-                                        text = label.text,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
-                                }
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Categorization / Smart Tags Card
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFF18181B),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFF27272A), RoundedCornerShape(14.dp))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Tags",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("On-device Indexed", "Sharp Focus", "Auto-organized").forEach { tag ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF27272A))
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = tag,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFFE4E4E7)
+                                )
                             }
                         }
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-
-            // OCR Extracted Text
-            if (!image.ocrText.isNullOrBlank()) {
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "Text Found",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = image.ocrText,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                            lineHeight = 18.sp
-                        )
                     }
                 }
             }

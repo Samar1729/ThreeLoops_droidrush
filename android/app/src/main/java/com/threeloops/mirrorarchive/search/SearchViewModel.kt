@@ -2,12 +2,14 @@ package com.threeloops.mirrorarchive.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.threeloops.mirrorarchive.albums.AlbumRules
 import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
-import kotlin.system.measureTimeMillis
+import javax.inject.Inject
 
 enum class SearchMode {
     TAGS,
@@ -38,7 +40,8 @@ object SearchTimer {
  * Owner: Aditya
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-class SearchViewModel(
+@HiltViewModel
+class SearchViewModel @Inject constructor(
     private val repository: ImageRepository
 ) : ViewModel() {
 
@@ -53,28 +56,35 @@ class SearchViewModel(
     val suggestions: StateFlow<List<String>> = query
         .debounce(150)
         .flatMapLatest { q ->
-            if (q.isBlank()) flowOf(emptyList())
-            else repository.suggestions(q.trim().lowercase())
+            if (q.isBlank()) {
+                flowOf(listOf("receipt", "invoice", "screenshot", "food", "dinner", "people", "portrait"))
+            } else {
+                repository.suggestions(q.trim().lowercase())
+            }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val results: StateFlow<SearchUiState> = combine(query, _mode) { q, currentMode ->
         Pair(q, currentMode)
     }
-        .debounce(250)
+        .debounce(200)
         .distinctUntilChanged()
         .flatMapLatest { (q, currentMode) ->
             if (q.isBlank()) {
                 flowOf(SearchUiState.Idle)
             } else {
+                val startTime = System.currentTimeMillis()
                 val flow = if (currentMode == SearchMode.TAGS) {
+                    val synonyms = AlbumRules.synonyms[q.trim().lowercase()] ?: emptyList()
+                    val queryWithSynonyms = listOf(q.trim()) + synonyms
                     repository.searchByTag(q.trim())
                 } else {
                     repository.searchByText(q.trim())
                 }
                 flow.map { list ->
+                    val latency = (System.currentTimeMillis() - startTime).coerceAtLeast(12L)
                     if (list.isEmpty()) SearchUiState.Empty
-                    else SearchUiState.Results(list, latencyMs = 18L)
+                    else SearchUiState.Results(list, latencyMs = latency)
                 }
             }
         }
