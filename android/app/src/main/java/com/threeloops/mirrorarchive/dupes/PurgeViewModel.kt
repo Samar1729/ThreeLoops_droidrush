@@ -9,8 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,53 +22,63 @@ class PurgeViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    private val _state = MutableStateFlow<PurgeUiState>(PurgeUiState.Idle)
+    val state: StateFlow<PurgeUiState> = _state.asStateFlow()
+
     private var pendingPlan: PurgePlan? = null
 
     /**
      * Generates the IntentSender for MediaStore deletion dialog.
-     * Use MediaStore.createTrashRequest for 30-day undo if preferred.
      */
     fun createRequest(plan: PurgePlan): IntentSender {
         val verifiedPlan = planner.verify(plan)
         this.pendingPlan = verifiedPlan
         
-        // minSdk 30 guarantees createDeleteRequest exists
         val pendingIntent = MediaStore.createDeleteRequest(context.contentResolver, verifiedPlan.deleteUris)
         return pendingIntent.intentSender
     }
 
     /**
+     * Direct execution of purge without MediaStore prompt (for in-memory or already authorized).
+     */
+    fun executePurge(plan: PurgePlan) {
+        viewModelScope.launch {
+            _state.value = PurgeUiState.Purging
+            try {
+                repository.deleteRows(plan.deleteIds)
+                _state.value = PurgeUiState.Done(
+                    deletedCount = plan.deleteIds.size,
+                    freedBytes = plan.bytesFreed
+                )
+            } catch (e: Exception) {
+                _state.value = PurgeUiState.Error(e.message ?: "Purge failed")
+            }
+        }
+    }
+
+    /**
      * Called from the UI layer when ActivityResultLauncher returns.
-     * RESULT_OK -> Deletes rows from Room. Canceling changes nothing.
      */
     fun onResult(resultCode: Int) {
         if (resultCode == RESULT_OK) {
             pendingPlan?.let { plan ->
                 viewModelScope.launch {
                     repository.deleteRows(plan.deleteIds)
-                    // The UI will automatically update if it observes repository Flows
+                    _state.value = PurgeUiState.Done(
+                        deletedCount = plan.deleteIds.size,
+                        freedBytes = plan.bytesFreed
+                    )
                 }
             }
         }
-        // Always clear the plan after resolution
         pendingPlan = null
     }
 
-    /**
-     * S-3 contract: Returns total bytes freeable across ALL groups' non-best photos.
-     * Feeds the 'Space you can free' UI counter.
-     */
-    fun spaceFreeable(allGroups: List<DuplicateGroup>): Flow<Long> {
-        // Collect all candidate IDs that are NOT the best shot in their respective groups
+    fun spaceFreeable(allGroups: List<DuplicateGroup>): Long {
         val nonBestIds = allGroups.flatMap { group ->
             group.imageIds.filter { it != group.bestId }
         }
-        
-        // This is a simplified Flow conversion. In a real repository, 
-        // you might want a direct DAO sum query, but doing it in memory is fine here.
-        return repository.duplicateCandidatesFlow().map { rows ->
-            val sizeMap = repository.items(nonBestIds).associate { it.id to it.sizeBytes }
-            nonBestIds.sumOf { sizeMap[it] ?: 0L }
-        }
+        val sizeMap = repository.items(nonBestIds).associate { it.id to it.sizeBytes }
+        return nonBestIds.sumOf { sizeMap[it] ?: 0L }
     }
 }

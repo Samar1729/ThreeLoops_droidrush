@@ -32,6 +32,7 @@ import com.threeloops.mirrorarchive.ui.albums.AlbumDetailScreen
 import com.threeloops.mirrorarchive.ui.albums.AlbumsScreen
 import com.threeloops.mirrorarchive.ui.albums.AlbumsViewModel
 import com.threeloops.mirrorarchive.ui.auth.AuthScreen
+import com.threeloops.mirrorarchive.ui.dupes.DuplicateGroupDetailScreen
 import com.threeloops.mirrorarchive.ui.dupes.DuplicatesScreen
 import com.threeloops.mirrorarchive.ui.imagedetail.ImageDetailScreen
 import com.threeloops.mirrorarchive.ui.metrics.MetricsScreen
@@ -318,8 +319,13 @@ fun MainNavigationApp(
                         defaultValue = "1"
                     }
                 )
-            ) {
-                DuplicatesScreen(
+            ) { backStackEntry ->
+                val groupIdStr = backStackEntry.arguments?.getString("groupId") ?: "1"
+                val groupId = groupIdStr.toLongOrNull() ?: 1L
+                DuplicateGroupDetailScreen(
+                    groupId = groupId,
+                    duplicatesViewModel = hiltViewModel(),
+                    purgeViewModel = hiltViewModel(),
                     onBackClick = { navController.popBackStack() },
                     onImageClick = { imageId ->
                         navController.navigate(Routes.imageDetail(imageId))
