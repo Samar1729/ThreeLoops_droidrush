@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,12 +24,23 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.threeloops.mirrorarchive.contracts.ImageItem
+import com.threeloops.mirrorarchive.ui.albums.AlbumDetailScreen
+import com.threeloops.mirrorarchive.ui.albums.AlbumsScreen
+import com.threeloops.mirrorarchive.ui.albums.AlbumsViewModel
+import com.threeloops.mirrorarchive.ui.dupes.DuplicatesScreen
+import com.threeloops.mirrorarchive.ui.imagedetail.ImageDetailScreen
+import com.threeloops.mirrorarchive.ui.metrics.MetricsScreen
 import com.threeloops.mirrorarchive.ui.navigation.AppNavigationState
 import com.threeloops.mirrorarchive.ui.navigation.MainViewModel
 import com.threeloops.mirrorarchive.ui.navigation.MirrorArchiveBottomBar
 import com.threeloops.mirrorarchive.ui.navigation.Routes
 import com.threeloops.mirrorarchive.ui.onboarding.OnboardingScreen
+import com.threeloops.mirrorarchive.ui.people.PeopleScreen
 import com.threeloops.mirrorarchive.ui.permission.PermissionDeniedScreen
+import com.threeloops.mirrorarchive.ui.search.SearchScreen
+import com.threeloops.mirrorarchive.ui.settings.SettingsScreen
+import com.threeloops.mirrorarchive.ui.storage.StorageSaverScreen
 import com.threeloops.mirrorarchive.ui.theme.MirrorArchiveTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -145,7 +155,18 @@ fun MainNavigationApp(
         ) {
             // Three main bottom tabs
             composable(Routes.ALBUMS) {
-                PlaceholderScreen(name = "albums")
+                AlbumsScreen(
+                    viewModel = hiltViewModel(),
+                    onAlbumClick = { albumType ->
+                        navController.navigate(Routes.albumDetail(albumType.name))
+                    },
+                    onNavigateDuplicates = {
+                        navController.navigate(Routes.DUPLICATES)
+                    },
+                    onNavigateStorageSaver = {
+                        navController.navigate(Routes.STORAGE_SAVER)
+                    }
+                )
             }
 
             composable(
@@ -160,14 +181,22 @@ fun MainNavigationApp(
                         defaultValue = ""
                     }
                 )
-            ) { backStackEntry ->
-                val mode = backStackEntry.arguments?.getString("mode") ?: "TAGS"
-                val q = backStackEntry.arguments?.getString("q") ?: ""
-                PlaceholderScreen(name = "search?mode=$mode&q=$q")
+            ) {
+                SearchScreen(
+                    viewModel = hiltViewModel(),
+                    onImageClick = { imageId ->
+                        navController.navigate(Routes.imageDetail(imageId))
+                    }
+                )
             }
 
             composable(Routes.PEOPLE) {
-                PlaceholderScreen(name = "people")
+                PeopleScreen(
+                    viewModel = hiltViewModel(),
+                    onImageClick = { imageId ->
+                        navController.navigate(Routes.imageDetail(imageId))
+                    }
+                )
             }
 
             // Onboarding & Permission destinations
@@ -205,18 +234,25 @@ fun MainNavigationApp(
                 )
             }
 
-            // Detail destinations (arguments are IDs only)
+            // Detail destinations
             composable(
                 route = Routes.ALBUM_DETAIL,
                 arguments = listOf(
                     navArgument("albumType") {
                         type = NavType.StringType
-                        defaultValue = "{albumType}"
+                        defaultValue = "SCREENSHOTS"
                     }
                 )
             ) { backStackEntry ->
-                val albumType = backStackEntry.arguments?.getString("albumType") ?: "{albumType}"
-                PlaceholderScreen(name = "albums/$albumType")
+                val albumType = backStackEntry.arguments?.getString("albumType") ?: "SCREENSHOTS"
+                AlbumDetailScreen(
+                    albumTypeStr = albumType,
+                    viewModel = hiltViewModel(),
+                    onBackClick = { navController.popBackStack() },
+                    onImageClick = { imageId ->
+                        navController.navigate(Routes.imageDetail(imageId))
+                    }
+                )
             }
 
             composable(
@@ -224,16 +260,38 @@ fun MainNavigationApp(
                 arguments = listOf(
                     navArgument("imageId") {
                         type = NavType.StringType
-                        defaultValue = "{imageId}"
+                        defaultValue = "1"
                     }
                 )
             ) { backStackEntry ->
-                val imageId = backStackEntry.arguments?.getString("imageId") ?: "{imageId}"
-                PlaceholderScreen(name = "image/$imageId")
+                val imageIdStr = backStackEntry.arguments?.getString("imageId") ?: "1"
+                val imageId = imageIdStr.toLongOrNull() ?: 1L
+                val albumsViewModel: AlbumsViewModel = hiltViewModel()
+                val imageItem = albumsViewModel.getImage(imageId) ?: ImageItem(
+                    id = imageId,
+                    mediaId = 100L + imageId,
+                    uri = "content://media/external/images/media/${100L + imageId}",
+                    dateAdded = System.currentTimeMillis() / 1000,
+                    dateTaken = System.currentTimeMillis(),
+                    sizeBytes = 2_800_000L,
+                    width = 1920,
+                    height = 1080,
+                    blurScore = 120.0,
+                    faceCount = 1
+                )
+                ImageDetailScreen(
+                    image = imageItem,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
 
             composable(Routes.DUPLICATES) {
-                PlaceholderScreen(name = "duplicates")
+                DuplicatesScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onImageClick = { imageId ->
+                        navController.navigate(Routes.imageDetail(imageId))
+                    }
+                )
             }
 
             composable(
@@ -241,61 +299,39 @@ fun MainNavigationApp(
                 arguments = listOf(
                     navArgument("groupId") {
                         type = NavType.StringType
-                        defaultValue = "{groupId}"
+                        defaultValue = "1"
                     }
                 )
-            ) { backStackEntry ->
-                val groupId = backStackEntry.arguments?.getString("groupId") ?: "{groupId}"
-                PlaceholderScreen(name = "duplicates/group/$groupId")
+            ) {
+                DuplicatesScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onImageClick = { imageId ->
+                        navController.navigate(Routes.imageDetail(imageId))
+                    }
+                )
             }
 
             composable(Routes.STORAGE_SAVER) {
-                PlaceholderScreen(name = "storage_saver")
-            }
-
-            composable(
-                route = Routes.EXPORT,
-                arguments = listOf(
-                    navArgument("ids") {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = ""
+                StorageSaverScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onImageClick = { imageId ->
+                        navController.navigate(Routes.imageDetail(imageId))
                     }
                 )
-            ) { backStackEntry ->
-                val ids = backStackEntry.arguments?.getString("ids") ?: ""
-                PlaceholderScreen(name = "export?ids=$ids")
             }
 
             composable(Routes.SETTINGS) {
-                PlaceholderScreen(name = "settings")
+                SettingsScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateMetrics = { navController.navigate(Routes.METRICS) }
+                )
             }
 
             composable(Routes.METRICS) {
-                PlaceholderScreen(name = "metrics")
+                MetricsScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
-    }
-}
-
-/**
- * Placeholder screen displaying a centered Text with the route name.
- *
- * @param name The destination route name.
- * @param modifier The layout modifier.
- */
-@Composable
-fun PlaceholderScreen(
-    name: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.headlineMedium
-        )
     }
 }
