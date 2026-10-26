@@ -144,6 +144,7 @@ fun MainNavigationApp(
     val isGateScreen = currentRoute == Routes.ONBOARDING || currentRoute == Routes.PERMISSION_DENIED
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Black,
         bottomBar = {
             if (!isGateScreen) {
                 MirrorArchiveBottomBar(

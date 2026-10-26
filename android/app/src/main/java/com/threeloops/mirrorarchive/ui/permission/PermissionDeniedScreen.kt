@@ -166,7 +166,7 @@ private fun DeniedContent(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Mirror Archive requires access to read your photos in order to organize smart albums, run on-device OCR, and find duplicates.",
+            text = "Vault requires access to read your photos in order to organize smart albums, run on-device OCR, and find duplicates.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -261,7 +261,7 @@ private fun PermanentlyDeniedContent(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Photo and video access has been permanently disabled for Mirror Archive. Android requires you to manually grant this permission from system Settings.",
+            text = "Photo and video access has been permanently disabled for Vault. Android requires you to manually grant this permission from system Settings.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -339,7 +339,7 @@ private fun PartialContent(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "You granted access to selected photos only. Mirror Archive can only organize, index, and analyze the photos you picked. Unselected photos will not appear.",
+            text = "You granted access to selected photos only. Vault can only organize, index, and analyze the photos you picked. Unselected photos will not appear.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

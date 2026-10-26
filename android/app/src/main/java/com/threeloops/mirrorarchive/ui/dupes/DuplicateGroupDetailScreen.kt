@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -16,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material.icons.outlined.PhotoSizeSelectLarge
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,22 +36,13 @@ import com.threeloops.mirrorarchive.dupes.DuplicatesViewModel
 import com.threeloops.mirrorarchive.dupes.PurgePlan
 import com.threeloops.mirrorarchive.dupes.PurgeUiState
 import com.threeloops.mirrorarchive.dupes.PurgeViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.threeloops.mirrorarchive.ui.theme.GlassCard
+import com.threeloops.mirrorarchive.ui.theme.GlassScaffoldBackground
+import com.threeloops.mirrorarchive.ui.theme.TextMuted
+import com.threeloops.mirrorarchive.ui.theme.TextPrimary
+import com.threeloops.mirrorarchive.ui.theme.TextSecondary
+import com.threeloops.mirrorarchive.ui.theme.glass
 
-/**
- * Detail screen for a single duplicate group, showing all member images
- * with metadata comparisons and a purge action.
- *
- * @param groupId The ID of the group to display.
- * @param duplicatesViewModel ViewModel providing groups and image data.
- * @param purgeViewModel ViewModel managing the purge execution.
- * @param onBackClick Callback for back navigation.
- * @param onImageClick Callback when an image is tapped for detail.
- * @param modifier Layout modifier.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DuplicateGroupDetailScreen(
     groupId: Long,
@@ -66,7 +55,6 @@ fun DuplicateGroupDetailScreen(
     val uiState by duplicatesViewModel.state.collectAsState()
     val purgeState by purgeViewModel.state.collectAsState()
 
-    // Find the group and build context
     val (group, imageMap) = remember(uiState, groupId) {
         when (val state = uiState) {
             is DuplicatesUiState.Results -> {
@@ -77,294 +65,289 @@ fun DuplicateGroupDetailScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Group #$groupId",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        modifier = modifier
-    ) { innerPadding ->
-        if (group == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Group not found",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                )
-            }
-            return@Scaffold
-        }
-
-        val groupImages = group.imageIds.mapNotNull { imageMap[it] }
-        val plan = remember(group) { duplicatesViewModel.planPurge(group) }
-
+    GlassScaffoldBackground {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+            modifier = modifier.fillMaxSize()
         ) {
-            // Group info card
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                modifier = Modifier.fillMaxWidth()
+            // Top Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "${groupImages.size} photos in group",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .glass(
+                            shape = CircleShape,
+                            backgroundColor = Color.White.copy(alpha = 0.08f),
+                            topBorderAlpha = 0.35f
                         )
-                        Text(
-                            text = "Max distance: ${group.maxDistance}",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Reclaimable: ${String.format("%.1f", plan.reclaimableBytes / (1024.0 * 1024.0))} MB",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Text(
+                    text = "Group #$groupId",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = TextPrimary
+                )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            if (group == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Group not found",
+                        fontSize = 14.sp,
+                        color = TextMuted
+                    )
+                }
+                return@Column
+            }
 
-            // Image grid
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            val groupImages = group.imageIds.mapNotNull { imageMap[it] }
+            val plan = remember(group) { duplicatesViewModel.planPurge(group) }
+
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
             ) {
-                items(groupImages) { image ->
-                    val isBest = image.id == group.bestId
-                    val isPurge = image.id in plan.purgeIds
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(0.75f)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFF262626))
-                            .then(
-                                if (isBest) {
-                                    Modifier.border(
-                                        width = 2.dp,
-                                        color = Color(0xFF4ADE80),
-                                        shape = RoundedCornerShape(14.dp)
-                                    )
-                                } else {
-                                    Modifier.border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                        shape = RoundedCornerShape(14.dp)
-                                    )
-                                }
+                // Group Info Glass Card
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    backgroundColor = Color.White.copy(alpha = 0.06f),
+                    topBorderAlpha = 0.28f
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "${groupImages.size} photos in group",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
                             )
-                            .clickable { onImageClick(image.id) }
-                    ) {
-                        AsyncImage(
-                            model = image.uri,
-                            contentDescription = image.displayName,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                            Text(
+                                text = "Max distance: ${group.maxDistance}",
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Reclaimable: ${String.format("%.1f", plan.reclaimableBytes / (1024.0 * 1024.0))} MB",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary
                         )
+                    }
+                }
 
-                        // Gradient overlay
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Image Grid
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    items(groupImages) { image ->
+                        val isBest = image.id == group.bestId
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(64.dp)
-                                .align(Alignment.BottomCenter)
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.7f)
+                                .aspectRatio(0.75f)
+                                .glass(
+                                    shape = RoundedCornerShape(16.dp),
+                                    backgroundColor = Color.White.copy(alpha = 0.05f),
+                                    topBorderAlpha = if (isBest) 0.60f else 0.20f,
+                                    borderWidth = if (isBest) 2.dp else 1.dp
+                                )
+                                .clickable { onImageClick(image.id) }
+                        ) {
+                            AsyncImage(
+                                model = image.uri,
+                                contentDescription = image.displayName,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(16.dp))
+                            )
+
+                            // Status badge
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(8.dp)
+                                    .glass(
+                                        shape = RoundedCornerShape(6.dp),
+                                        backgroundColor = if (isBest) Color.White else Color.Black.copy(alpha = 0.75f),
+                                        borderWidth = 0.dp
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = if (isBest) "KEEP" else "PURGE",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isBest) Color.Black else TextPrimary
+                                )
+                            }
+
+                            // Image metadata
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .fillMaxWidth()
+                                    .background(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.85f)
+                                            )
                                         )
                                     )
+                                    .padding(8.dp)
+                            ) {
+                                Text(
+                                    text = image.displayName,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                        )
-
-                        // Status badge
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = if (isBest) Color(0xFF4ADE80).copy(alpha = 0.9f)
-                            else Color.Red.copy(alpha = 0.8f),
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(8.dp)
-                        ) {
-                            Text(
-                                text = if (isBest) "KEEP" else "PURGE",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isBest) Color.Black else Color.White,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-
-                        // Image metadata
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(8.dp)
-                        ) {
-                            Text(
-                                text = image.displayName,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = "Blur: ${image.blurScore.toInt()} · ${formatSize(image.sizeBytes)}",
-                                fontSize = 9.sp,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
+                                Text(
+                                    text = "Blur: ${image.blurScore.toInt()} · ${formatSize(image.sizeBytes)}",
+                                    fontSize = 10.sp,
+                                    color = TextSecondary
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-            // Purge action
-            when (purgeState) {
-                is PurgeUiState.Idle -> {
-                    Button(
-                        onClick = { purgeViewModel.executePurge(plan) },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.DeleteSweep,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Keep Best & Delete ${plan.purgeIds.size} (${String.format("%.1f", plan.reclaimableBytes / (1024.0 * 1024.0))} MB)",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                is PurgeUiState.Purging -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    }
-                }
-
-                is PurgeUiState.Done -> {
-                    val done = purgeState as PurgeUiState.Done
-                    Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF4ADE80).copy(alpha = 0.15f)
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
+                // Purge action
+                when (purgeState) {
+                    is PurgeUiState.Idle -> {
+                        Button(
+                            onClick = { purgeViewModel.executePurge(plan) },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color.Black
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                                .height(52.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.CheckCircle,
+                                imageVector = Icons.Outlined.DeleteSweep,
                                 contentDescription = null,
-                                tint = Color(0xFF4ADE80),
-                                modifier = Modifier.size(20.dp)
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Deleted ${done.deletedCount} photos · Freed ${String.format("%.1f", done.freedBytes / (1024.0 * 1024.0))} MB",
+                                text = "Keep Best & Clean ${plan.purgeIds.size} (${String.format("%.1f", plan.reclaimableBytes / (1024.0 * 1024.0))} MB)",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
+                    }
+
+                    is PurgeUiState.Purging -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = TextPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    is PurgeUiState.Done -> {
+                        val done = purgeState as PurgeUiState.Done
+                        GlassCard(
+                            shape = RoundedCornerShape(16.dp),
+                            backgroundColor = Color.White.copy(alpha = 0.08f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = null,
+                                    tint = TextPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Cleaned ${done.deletedCount} photos · Freed ${String.format("%.1f", done.freedBytes / (1024.0 * 1024.0))} MB",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextPrimary
+                                )
+                            }
+                        }
+                    }
+
+                    is PurgeUiState.Error -> {
+                        val error = purgeState as PurgeUiState.Error
+                        GlassCard(
+                            shape = RoundedCornerShape(16.dp),
+                            backgroundColor = Color.White.copy(alpha = 0.08f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = error.message,
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onBackground
+                                color = TextPrimary,
+                                modifier = Modifier.padding(16.dp)
                             )
                         }
                     }
                 }
 
-                is PurgeUiState.Error -> {
-                    val error = purgeState as PurgeUiState.Error
-                    Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = error.message,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(24.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
-/**
- * Formats byte size to a human-readable string.
- */
 private fun formatSize(bytes: Long): String {
     return when {
         bytes >= 1024 * 1024 -> "${String.format("%.1f", bytes / (1024.0 * 1024.0))} MB"

@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.contracts.ImageItem
+import com.threeloops.mirrorarchive.ui.theme.GlassScaffoldBackground
+import com.threeloops.mirrorarchive.ui.theme.glass
 
 data class DuplicateCluster(
     val id: Long,
@@ -69,194 +71,222 @@ fun DuplicatesScreen(
 
     var cleaned by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFF0C0C0E))
-    ) {
-        // Top Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+    GlassScaffoldBackground {
+        Column(
+            modifier = modifier.fillMaxSize()
         ) {
-            IconButton(
-                onClick = onBackClick,
+            // Top Bar
+            Row(
                 modifier = Modifier
-                    .size(38.dp)
-                    .background(Color(0xFF1C1C1E), CircleShape)
-                    .border(1.dp, Color(0xFF2C2C2E), CircleShape)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column {
-                Text(
-                    text = "Duplicates & Bursts",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Text(
-                    text = if (cleaned) "All duplicates cleaned" else "${clusters.size} clusters • ~13.2 MB reclaimable",
-                    fontSize = 12.sp,
-                    color = Color(0xFFA1A1AA)
-                )
-            }
-        }
-
-        if (cleaned) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .glass(
+                            shape = CircleShape,
+                            backgroundColor = Color.White.copy(alpha = 0.08f),
+                            topBorderAlpha = 0.35f
+                        )
+                ) {
                     Icon(
-                        imageVector = Icons.Outlined.Check,
-                        contentDescription = null,
-                        tint = Color(0xFF34C759),
-                        modifier = Modifier.size(48.dp)
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column {
                     Text(
-                        text = "Library Optimized",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        text = "Duplicates & Bursts",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Zero redundant duplicates found",
-                        fontSize = 13.sp,
+                        text = if (cleaned) "All duplicates cleaned" else "${clusters.size} clusters • ~13.2 MB reclaimable",
+                        fontSize = 12.sp,
                         color = Color(0xFFA1A1AA)
                     )
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Summary Card
-                item {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF18181B),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, Color(0xFF27272A), RoundedCornerShape(16.dp))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Reclaimable Storage",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFFA1A1AA)
-                                )
-                                Text(
-                                    text = "13.2 MB",
-                                    fontSize = 26.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
 
-                            Button(
-                                onClick = { cleaned = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(20.dp)
-                            ) {
-                                Text(
-                                    text = "Keep Best",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.Black
-                                )
-                            }
+            if (cleaned) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .size(58.dp)
+                                .glass(
+                                    shape = RoundedCornerShape(18.dp),
+                                    backgroundColor = Color.White.copy(alpha = 0.08f),
+                                    topBorderAlpha = 0.35f
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(30.dp)
+                            )
                         }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "Library Optimized",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Zero redundant duplicates found",
+                            fontSize = 13.sp,
+                            color = Color(0xFFA1A1AA)
+                        )
                     }
                 }
-
-                // Cluster Items
-                items(clusters, key = { it.id }) { cluster ->
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF18181B),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, Color(0xFF27272A), RoundedCornerShape(16.dp))
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 40.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Summary Glass Card
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .glass(
+                                    shape = RoundedCornerShape(18.dp),
+                                    backgroundColor = Color.White.copy(alpha = 0.06f),
+                                    topBorderAlpha = 0.28f,
+                                    bottomBorderAlpha = 0.06f
+                                )
+                        ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.padding(18.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = cluster.title,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "${cluster.similarityPct}% match",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF34C759)
-                                )
+                                Column {
+                                    Text(
+                                        text = "Reclaimable Storage",
+                                        fontSize = 12.sp,
+                                        color = Color(0xFFA1A1AA)
+                                    )
+                                    Text(
+                                        text = "13.2 MB",
+                                        fontSize = 26.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+
+                                Button(
+                                    onClick = { cleaned = true },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.White,
+                                        contentColor = Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(20.dp)
+                                ) {
+                                    Text(
+                                        text = "Keep Best",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.Black
+                                    )
+                                }
                             }
+                        }
+                    }
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                    // Cluster Items
+                    items(clusters, key = { it.id }) { cluster ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .glass(
+                                    shape = RoundedCornerShape(18.dp),
+                                    backgroundColor = Color.White.copy(alpha = 0.05f),
+                                    topBorderAlpha = 0.25f,
+                                    bottomBorderAlpha = 0.06f
+                                )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = cluster.title,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "${cluster.similarityPct}% match",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFFE4E4E7)
+                                    )
+                                }
 
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                items(cluster.items) { item ->
-                                    val isBest = item.id == cluster.bestItemId
-                                    Box(
-                                        modifier = Modifier
-                                            .size(110.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFF27272A))
-                                            .border(
-                                                width = if (isBest) 2.dp else 0.dp,
-                                                color = if (isBest) Color.White else Color.Transparent,
-                                                shape = RoundedCornerShape(12.dp)
-                                            )
-                                            .clickable { onImageClick(item.id) }
-                                    ) {
-                                        AsyncImage(
-                                            model = item.uri,
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                                        if (isBest) {
-                                            Surface(
-                                                shape = RoundedCornerShape(6.dp),
-                                                color = Color.White,
-                                                modifier = Modifier
-                                                    .align(Alignment.BottomStart)
-                                                    .padding(6.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Best",
-                                                    fontSize = 10.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color.Black,
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    items(cluster.items) { item ->
+                                        val isBest = item.id == cluster.bestItemId
+                                        Box(
+                                            modifier = Modifier
+                                                .size(110.dp)
+                                                .glass(
+                                                    shape = RoundedCornerShape(14.dp),
+                                                    backgroundColor = Color.White.copy(alpha = 0.05f),
+                                                    topBorderAlpha = if (isBest) 0.60f else 0.20f,
+                                                    borderWidth = if (isBest) 2.dp else 1.dp
                                                 )
+                                                .clickable { onImageClick(item.id) }
+                                        ) {
+                                            AsyncImage(
+                                                model = item.uri,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(RoundedCornerShape(14.dp))
+                                            )
+
+                                            if (isBest) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomStart)
+                                                        .padding(6.dp)
+                                                        .glass(
+                                                            shape = RoundedCornerShape(6.dp),
+                                                            backgroundColor = Color.White,
+                                                            borderWidth = 0.dp
+                                                        )
+                                                        .padding(horizontal = 7.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Best",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.Black
+                                                    )
+                                                }
                                             }
                                         }
                                     }

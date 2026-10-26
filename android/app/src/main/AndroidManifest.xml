@@ -26,9 +26,9 @@
     <application
         android:name=".MirrorArchiveApp"
         android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
-        android:label="Mirror Archive"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@drawable/vault_logo"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/vault_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.MirrorArchive"
         tools:targetApi="35">
@@ -36,7 +36,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="Mirror Archive"
+            android:label="@string/app_name"
             android:theme="@style/Theme.MirrorArchive">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
