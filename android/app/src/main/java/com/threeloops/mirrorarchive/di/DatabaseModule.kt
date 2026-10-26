@@ -3,6 +3,7 @@ package com.threeloops.mirrorarchive.di
 import android.content.Context
 import com.threeloops.mirrorarchive.data.db.AppDatabase
 import com.threeloops.mirrorarchive.data.db.SkippedDao
+import com.threeloops.mirrorarchive.data.db.ScanStateDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,4 +22,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideSkippedDao(database: AppDatabase): SkippedDao = database.skippedDao()
+
+    @Provides
+    @Singleton
+    fun provideScanStateDao(database: AppDatabase): ScanStateDao = database.scanStateDao()
 }
