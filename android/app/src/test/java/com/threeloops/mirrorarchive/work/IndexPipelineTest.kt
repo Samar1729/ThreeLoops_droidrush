@@ -85,7 +85,7 @@ class IndexPipelineTest {
         assertEquals(3.5, result?.blurScore ?: 0.0, 0.0)
         assertEquals(1, result?.faceCount)
         assertSame(face, result?.faces?.single())
-        assertEquals(setOf(AlbumType.FOOD), result?.albums)
+        assertEquals(setOf(AlbumType.FOOD, AlbumType.PEOPLE), result?.albums)
         assertEquals(PIPELINE_VERSION, result?.pipelineVersion)
         assertTrue(skipped.rows.isEmpty())
         assertEquals(listOf(ocrBitmap, bitmap), loader.recycled)

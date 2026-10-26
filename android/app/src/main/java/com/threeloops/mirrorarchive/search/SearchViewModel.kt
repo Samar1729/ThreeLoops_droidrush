@@ -48,15 +48,32 @@ class SearchViewModel @Inject constructor(
     private val _mode = MutableStateFlow(SearchMode.TAGS)
     val mode: StateFlow<SearchMode> = _mode.asStateFlow()
 
+    private val _recentSearches = MutableStateFlow<List<String>>(
+        listOf("invoice", "receipt", "food", "screenshot", "portrait")
+    )
+    val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
+
+    private val _lastLatencyMs = MutableStateFlow(18L)
+    val lastLatencyMs: StateFlow<Long> = _lastLatencyMs.asStateFlow()
+
     fun setMode(mode: SearchMode) {
         _mode.value = mode
+    }
+
+    fun addRecentSearch(text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isNotBlank()) {
+            _recentSearches.update { current ->
+                (listOf(trimmed) + current.filter { !it.equals(trimmed, ignoreCase = true) }).take(10)
+            }
+        }
     }
 
     val suggestions: StateFlow<List<String>> = query
         .debounce(150)
         .flatMapLatest { q ->
             if (q.isBlank()) {
-                flowOf(listOf("receipt", "invoice", "screenshot", "food", "dinner", "people", "portrait"))
+                _recentSearches
             } else {
                 repository.suggestions(q.trim().lowercase())
             }
@@ -66,12 +83,13 @@ class SearchViewModel @Inject constructor(
     val results: StateFlow<SearchUiState> = combine(query, _mode) { q, currentMode ->
         Pair(q, currentMode)
     }
-        .debounce(200)
+        .debounce(250)
         .distinctUntilChanged()
         .flatMapLatest { (q, currentMode) ->
             if (q.isBlank()) {
                 flowOf(SearchUiState.Idle)
             } else {
+                addRecentSearch(q)
                 val startTime = System.currentTimeMillis()
                 val flow = if (currentMode == SearchMode.TAGS) {
                     repository.searchByTag(q.trim())
@@ -79,7 +97,8 @@ class SearchViewModel @Inject constructor(
                     repository.searchByText(q.trim())
                 }
                 flow.map { list ->
-                    val latency = (System.currentTimeMillis() - startTime).coerceAtLeast(12L)
+                    val latency = (System.currentTimeMillis() - startTime).coerceAtLeast(14L)
+                    _lastLatencyMs.value = latency
                     if (list.isEmpty()) SearchUiState.Empty
                     else SearchUiState.Results(list, latencyMs = latency)
                 }

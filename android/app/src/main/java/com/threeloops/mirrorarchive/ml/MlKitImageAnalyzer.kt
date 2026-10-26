@@ -108,11 +108,13 @@ class MlKitImageAnalyzer @Inject constructor() : ImageAnalyzer {
     }
 
     override fun warmUp() {
-        val dummy = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888)
-        val dummyImage = InputImage.fromBitmap(dummy, 0)
-        labeler.process(dummyImage)
-        faceDetector.process(dummyImage)
-        textRecognizer.process(dummyImage)
+        try {
+            val dummy = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888)
+            val dummyImage = InputImage.fromBitmap(dummy, 0)
+            labeler.process(dummyImage)
+            faceDetector.process(dummyImage)
+            textRecognizer.process(dummyImage)
+        } catch (ignored: Throwable) {}
     }
 
     override fun close() {

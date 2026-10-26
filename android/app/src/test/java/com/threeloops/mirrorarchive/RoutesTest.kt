@@ -40,15 +40,21 @@ class RoutesTest {
     }
 
     @Test
-    fun verifyThreeBottomTabs() {
-        assertEquals(3, bottomNavItems.size)
-        assertEquals("Albums", bottomNavItems[0].label)
+    fun verifyFiveBottomTabs() {
+        assertEquals(5, bottomNavItems.size)
+        assertEquals("Library", bottomNavItems[0].label)
         assertEquals(Routes.ALBUMS, bottomNavItems[0].route)
 
-        assertEquals("Search", bottomNavItems[1].label)
-        assertTrue(bottomNavItems[1].route.startsWith("search"))
+        assertEquals("Dupes", bottomNavItems[1].label)
+        assertEquals(Routes.DUPLICATES, bottomNavItems[1].route)
 
-        assertEquals("People", bottomNavItems[2].label)
-        assertEquals(Routes.PEOPLE, bottomNavItems[2].route)
+        assertEquals("Search", bottomNavItems[2].label)
+        assertTrue(bottomNavItems[2].route.startsWith("search"))
+
+        assertEquals("People", bottomNavItems[3].label)
+        assertEquals(Routes.PEOPLE, bottomNavItems[3].route)
+
+        assertEquals("Ledger", bottomNavItems[4].label)
+        assertEquals(Routes.LEDGER, bottomNavItems[4].route)
     }
 }

@@ -45,6 +45,8 @@ import com.threeloops.mirrorarchive.ui.dupes.DuplicateGroupDetailScreen
 import com.threeloops.mirrorarchive.ui.dupes.DuplicatesScreen
 import com.threeloops.mirrorarchive.ui.imagedetail.ImageDetailScreen
 import com.threeloops.mirrorarchive.ui.metrics.MetricsScreen
+import com.threeloops.mirrorarchive.ui.ledger.RaseedLedgerScreen
+import com.threeloops.mirrorarchive.ui.navigation.NowIndexingBar
 import com.threeloops.mirrorarchive.ui.navigation.AppNavigationState
 import com.threeloops.mirrorarchive.ui.navigation.MainViewModel
 import com.threeloops.mirrorarchive.ui.navigation.MirrorArchiveBottomBar
@@ -161,30 +163,32 @@ fun MainNavigationApp(
         containerColor = androidx.compose.ui.graphics.Color.Black,
         bottomBar = {
             if (!isGateScreen) {
-                MirrorArchiveBottomBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        navController.navigate(route) {
-                            popUpTo(Routes.ALBUMS) {
-                                saveState = true
+                Column {
+                    NowIndexingBar(progress = scanProgress)
+                    MirrorArchiveBottomBar(
+                        currentRoute = currentRoute,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(Routes.ALBUMS) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    }
-                )
+                    )
+                }
             }
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            ScanProgressBanner(progress = scanProgress)
             NavHost(
                 navController = navController,
                 startDestination = calculatedStartDestination,
                 modifier = Modifier.weight(1f)
             ) {
-            // Three main bottom tabs
+            // Main bottom tabs
             composable(Routes.ALBUMS) {
                 AlbumsScreen(
                     viewModel = hiltViewModel(),
@@ -228,6 +232,15 @@ fun MainNavigationApp(
                 PeopleScreen(
                     viewModel = hiltViewModel(),
                     onImageClick = { imageId ->
+                        navController.navigate(Routes.imageDetail(imageId))
+                    }
+                )
+            }
+
+            composable(Routes.LEDGER) {
+                RaseedLedgerScreen(
+                    viewModel = hiltViewModel(),
+                    onReceiptClick = { imageId ->
                         navController.navigate(Routes.imageDetail(imageId))
                     }
                 )

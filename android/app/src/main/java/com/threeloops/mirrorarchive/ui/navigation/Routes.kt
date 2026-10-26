@@ -43,6 +43,9 @@ object Routes {
     /** Route for analytics and performance metrics. */
     const val METRICS = "metrics"
 
+    /** Route for Raseed Ledger (offline FinTech receipt & expense extractor). */
+    const val LEDGER = "ledger"
+
     /**
      * Builds navigation route for album detail.
      *

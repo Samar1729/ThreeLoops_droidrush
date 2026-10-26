@@ -35,8 +35,12 @@ import com.threeloops.mirrorarchive.contracts.AlbumSummary
 import com.threeloops.mirrorarchive.contracts.AlbumType
 import com.threeloops.mirrorarchive.contracts.ScanPhase
 import com.threeloops.mirrorarchive.contracts.ScanState
+import com.threeloops.mirrorarchive.ui.sandbox.NitiSandboxDialog
+import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
 import com.threeloops.mirrorarchive.ui.theme.GlassScaffoldBackground
 import com.threeloops.mirrorarchive.ui.theme.glass
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 @Composable
 fun AlbumsScreen(
@@ -51,8 +55,9 @@ fun AlbumsScreen(
     val scanState by viewModel.scanState.collectAsStateWithLifecycle()
     val devicePhotoCount by viewModel.devicePhotoCount.collectAsStateWithLifecycle()
     val loaderProof by viewModel.loaderProof.collectAsStateWithLifecycle()
+    var showNitiSandbox by remember { mutableStateOf(false) }
 
-    GlassScaffoldBackground(modifier = modifier) {
+    AmbientMeshBox(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -108,6 +113,31 @@ fun AlbumsScreen(
 
                 // Quick utility shortcuts inside Frosted Glass Discs
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Feature D: Niti Sandbox (Mentor / Judge tuning drawer)
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .glass(
+                                shape = CircleShape,
+                                backgroundColor = Color(0x3310B981),
+                                borderWidth = 1.dp,
+                                topBorderAlpha = 0.45f,
+                                bottomBorderAlpha = 0.10f
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { showNitiSandbox = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Tune,
+                            contentDescription = "Niti Sandbox",
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -242,6 +272,10 @@ fun AlbumsScreen(
                     )
                 }
             }
+        }
+
+        if (showNitiSandbox) {
+            NitiSandboxDialog(onDismiss = { showNitiSandbox = false })
         }
     }
 }

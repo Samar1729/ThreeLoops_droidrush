@@ -49,7 +49,8 @@ class IndexPipeline @Inject constructor(
                 AlbumClassifier.classify(
                     labels = labels,
                     path = "${row.displayName} ${row.relativePath}",
-                    ocr = ocr
+                    ocr = ocr,
+                    faceCount = faces.size
                 )
             }
             val hash = timed("hash") { hasher.hashAll(sourceBitmap) }

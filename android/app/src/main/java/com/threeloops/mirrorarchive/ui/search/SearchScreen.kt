@@ -34,6 +34,9 @@ import com.threeloops.mirrorarchive.ui.theme.TextPrimary
 import com.threeloops.mirrorarchive.ui.theme.TextSecondary
 import com.threeloops.mirrorarchive.ui.theme.glass
 
+import androidx.compose.ui.text.font.FontFamily
+import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
+
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel,
@@ -44,8 +47,9 @@ fun SearchScreen(
     val mode by viewModel.mode.collectAsStateWithLifecycle()
     val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
     val uiState by viewModel.results.collectAsStateWithLifecycle()
+    val latencyMs by viewModel.lastLatencyMs.collectAsStateWithLifecycle()
 
-    GlassScaffoldBackground {
+    AmbientMeshBox {
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -53,14 +57,41 @@ fun SearchScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Title
-            Text(
-                text = "Search",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                letterSpacing = (-0.5).sp
-            )
+            // Title & Latency Badge (SearchTimer)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Search",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    letterSpacing = (-0.5).sp
+                )
+
+                if (latencyMs > 0) {
+                    Box(
+                        modifier = Modifier
+                            .glass(
+                                shape = RoundedCornerShape(8.dp),
+                                backgroundColor = Color(0x3310B981),
+                                borderWidth = 1.dp,
+                                topBorderAlpha = 0.45f
+                            )
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "${latencyMs}ms",
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF10B981)
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
