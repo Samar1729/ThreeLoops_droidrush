@@ -3,11 +3,11 @@ package com.threeloops.mirrorarchive.di
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import com.threeloops.mirrorarchive.data.repo.RoomImageRepository
 import com.threeloops.mirrorarchive.dupes.DuplicateFinder
-import com.threeloops.mirrorarchive.dupes.DuplicateFinderStub
+import com.threeloops.mirrorarchive.dupes.RealDuplicateFinder
 import com.threeloops.mirrorarchive.hash.PerceptualHasher
 import com.threeloops.mirrorarchive.hash.PerceptualHasherStub
 import com.threeloops.mirrorarchive.ml.ImageAnalyzer
-import com.threeloops.mirrorarchive.ml.ImageAnalyzerStub
+import com.threeloops.mirrorarchive.ml.MlKitImageAnalyzer
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -29,11 +29,11 @@ abstract class AppModule {
     abstract fun bindImageRepository(impl: RoomImageRepository): ImageRepository
 
     /**
-     * Binds the stub analyzer while the indexing pipeline is being integrated.
+     * Binds the on-device ML Kit analyzer for label detection, OCR, and facial features.
      */
     @Binds
     @Singleton
-    abstract fun bindImageAnalyzer(impl: ImageAnalyzerStub): ImageAnalyzer
+    abstract fun bindImageAnalyzer(impl: MlKitImageAnalyzer): ImageAnalyzer
 
     /**
      * Binds [PerceptualHasherStub] as the [PerceptualHasher] component.
@@ -43,9 +43,9 @@ abstract class AppModule {
     abstract fun bindPerceptualHasher(impl: PerceptualHasherStub): PerceptualHasher
 
     /**
-     * Binds [DuplicateFinderStub] as the [DuplicateFinder] component.
+     * Binds [RealDuplicateFinder] as the [DuplicateFinder] component.
      */
     @Binds
     @Singleton
-    abstract fun bindDuplicateFinder(impl: DuplicateFinderStub): DuplicateFinder
+    abstract fun bindDuplicateFinder(impl: RealDuplicateFinder): DuplicateFinder
 }
