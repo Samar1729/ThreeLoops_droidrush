@@ -126,7 +126,7 @@ fun AlbumsScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         Text(
-            text = "Photos on device: ${devicePhotoCount?.toString() ?: \"…\"}",
+            text = "Photos on device: ${devicePhotoCount?.toString() ?: "…"}",
             fontSize = 14.sp,
             color = Color(0xFFA1A1AA)
         )
