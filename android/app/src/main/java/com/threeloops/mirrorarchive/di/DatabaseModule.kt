@@ -2,6 +2,7 @@ package com.threeloops.mirrorarchive.di
 
 import android.content.Context
 import com.threeloops.mirrorarchive.data.db.AppDatabase
+import com.threeloops.mirrorarchive.data.db.SkippedDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,4 +17,8 @@ object DatabaseModule {
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
         AppDatabase.build(context)
+
+    @Provides
+    @Singleton
+    fun provideSkippedDao(database: AppDatabase): SkippedDao = database.skippedDao()
 }

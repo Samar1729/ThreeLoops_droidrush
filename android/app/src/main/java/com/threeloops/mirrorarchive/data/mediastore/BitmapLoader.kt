@@ -10,6 +10,13 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Bitmap loading boundary for the indexing pipeline and its tests. */
+interface ThumbnailLoader {
+    fun load(uri: Uri, maxSide: Int = 512): Bitmap?
+    fun loadForOcr(uri: Uri): Bitmap?
+    fun recycle(bmp: Bitmap?)
+}
+
 /**
  * Loads bounded MediaStore thumbnails for image analysis.
  *
@@ -19,7 +26,7 @@ import javax.inject.Singleton
 @Singleton
 class BitmapLoader @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) : ThumbnailLoader {
 
     /**
      * Load a MediaStore thumbnail with its longest side bounded by [maxSide].
@@ -27,7 +34,7 @@ class BitmapLoader @Inject constructor(
      * Never decodes the full-size image. The caller owns the returned bitmap and must call
      * [recycle] in a `finally` block. Call this method off the main thread.
      */
-    fun load(uri: Uri, maxSide: Int = 512): Bitmap? {
+    override fun load(uri: Uri, maxSide: Int): Bitmap? {
         var bitmap: Bitmap? = null
         return try {
             require(maxSide > 0) { "maxSide must be positive" }
@@ -58,7 +65,7 @@ class BitmapLoader @Inject constructor(
     }
 
     /** Load a thumbnail sized for OCR. The caller must recycle the returned bitmap. */
-    fun loadForOcr(uri: Uri): Bitmap? = load(uri, 1024)
+    override fun loadForOcr(uri: Uri): Bitmap? = load(uri, 1024)
 
     /**
      * Load a thumbnail, scale it to [side] x [side], and return row-major luminance values.
@@ -92,7 +99,7 @@ class BitmapLoader @Inject constructor(
     }
 
     /** Recycle [bmp] if non-null and not already recycled. */
-    fun recycle(bmp: Bitmap?) {
+    override fun recycle(bmp: Bitmap?) {
         if (bmp != null && !bmp.isRecycled) bmp.recycle()
     }
 }
