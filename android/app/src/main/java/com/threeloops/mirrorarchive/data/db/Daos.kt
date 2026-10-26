@@ -4,12 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import com.threeloops.mirrorarchive.contracts.AlbumSummary
 import com.threeloops.mirrorarchive.contracts.AlbumType
 import com.threeloops.mirrorarchive.contracts.HashRow
+import androidx.sqlite.db.SupportSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -128,6 +130,9 @@ abstract class ImageDao {
     @Query("SELECT COUNT(*) FROM images")
     abstract fun count(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM images WHERE mediaId IN (:mediaIds)")
+    abstract suspend fun countExistingMediaIds(mediaIds: List<Long>): Int
+
     @Query("SELECT id, dHash, pHash, blurScore, dateAdded, dateTaken FROM images")
     abstract suspend fun hashRows(): List<HashRow>
 
@@ -136,6 +141,12 @@ abstract class ImageDao {
 
     @Query("SELECT * FROM images WHERE ocrText LIKE '%' || :q || '%'")
     abstract fun searchOcr(q: String): Flow<List<ImageEntity>>
+
+    @RawQuery(observedEntities = [ImageEntity::class, LabelEntity::class])
+    abstract fun searchByTag(query: SupportSQLiteQuery): Flow<List<ImageEntity>>
+
+    @Query("SELECT * FROM images WHERE id IN (:ids)")
+    abstract suspend fun imagesByIds(ids: List<Long>): List<ImageEntity>
 
     @Query("DELETE FROM images WHERE mediaId IN (:ids)")
     abstract suspend fun deleteByMediaIds(ids: List<Long>)
