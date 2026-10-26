@@ -23,6 +23,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 )
 @TypeConverters(DatabaseTypeConverters::class)
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun imageDao(): ImageDao
+    abstract fun labelDao(): LabelDao
+    abstract fun albumDao(): AlbumDao
+    abstract fun faceDao(): FaceDao
+    abstract fun scanStateDao(): ScanStateDao
+    abstract fun skippedDao(): SkippedDao
+
     companion object {
         private const val DATABASE_NAME = "mirror_archive.db"
 
