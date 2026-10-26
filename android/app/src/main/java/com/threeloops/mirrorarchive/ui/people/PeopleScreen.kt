@@ -29,11 +29,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DemoPhoto
 import com.threeloops.mirrorarchive.data.demo.DemoSeedData
 import com.threeloops.mirrorarchive.people.PeopleViewModel
 import com.threeloops.mirrorarchive.ui.burst.PravahSmartStacksView
-import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
 import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
 import com.threeloops.mirrorarchive.ui.theme.TextPrimary
 import com.threeloops.mirrorarchive.ui.theme.TextSecondary
@@ -286,6 +288,7 @@ fun PeopleScreen(
                                 items(clusterGroups.keys.toList()) { clusterId ->
                                     val count = clusterGroups[clusterId]?.size ?: 0
                                     val isSelected = selectedClusterId == clusterId
+                                    val repPhoto = clusterGroups[clusterId]?.firstOrNull()
 
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -298,21 +301,22 @@ fun PeopleScreen(
                                                 .size(54.dp)
                                                 .clip(CircleShape)
                                                 .background(
-                                                    if (isSelected) Color(0x3310B981) else Color.White.copy(alpha = 0.08f)
+                                                    if (isSelected) Color(0x3310B981) else Color(0xFF18181B)
                                                 )
                                                 .border(
                                                     width = if (isSelected) 2.dp else 1.dp,
                                                     color = if (isSelected) Color(0xFF10B981) else Color.White.copy(alpha = 0.20f),
                                                     shape = CircleShape
-                                                ),
-                                            contentAlignment = Alignment.Center
+                                                )
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Face,
-                                                contentDescription = null,
-                                                tint = if (isSelected) Color(0xFF10B981) else Color.White,
-                                                modifier = Modifier.size(26.dp)
-                                            )
+                                            if (repPhoto != null) {
+                                                AsyncImage(
+                                                    model = if (repPhoto.drawableRes != 0) repPhoto.drawableRes else repPhoto.imageUrl,
+                                                    contentDescription = null,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                                )
+                                            }
                                         }
 
                                         Spacer(modifier = Modifier.height(4.dp))
@@ -366,86 +370,83 @@ private fun PortraitCard(
     photo: DemoPhoto,
     onClick: () -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f))
-                ),
-                shape = RoundedCornerShape(16.dp)
-            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onClick() }
+                indication = null,
+                onClick = onClick
+            )
     ) {
-        DemoPhotoCanvas(
-            photo = photo,
-            modifier = Modifier.fillMaxSize(),
-            showLandmarks = true
-        )
-
-        // Gradient Scrim
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
-                        startY = 180f
-                    )
-                )
-        )
-
-        // Top-Right X-Ray Pill
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .glass(
-                    shape = CircleShape,
-                    backgroundColor = Color.Black.copy(alpha = 0.40f),
-                    borderWidth = 1.dp,
-                    topBorderAlpha = 0.35f
-                )
-                .padding(5.dp)
+                .fillMaxWidth()
+                .aspectRatio(0.85f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF18181B))
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Visibility,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(11.dp)
+            AsyncImage(
+                model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
+                contentDescription = photo.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
+
+            // Top-Right X-Ray Pill
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .background(Color.Black.copy(alpha = 0.60f), CircleShape)
+                    .padding(5.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Visibility,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(11.dp)
+                )
+            }
+
+            // Bottom Left Quality & Smile Pill
+            val smileProb = ((photo.smileProb ?: 0.90f) * 100).toInt()
+            val eyesProb = ((photo.eyesOpenProb ?: 0.95f) * 100).toInt()
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(6.dp)
+                    .background(Color.Black.copy(alpha = 0.60f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 6.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = "Eyes $eyesProb% • Smile $smileProb%",
+                    fontSize = 9.sp,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF10B981)
+                )
+            }
         }
 
-        // Bottom Left Quality & Smile Pill
-        val face = photo.faces.firstOrNull()
-        val smileProb = ((face?.smileProb ?: 0.90f) * 100).toInt()
-        val eyesProb = ((face?.eyesOpenProb ?: 0.95f) * 100).toInt()
+        Spacer(modifier = Modifier.height(6.dp))
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(8.dp)
-                .glass(
-                    shape = RoundedCornerShape(8.dp),
-                    backgroundColor = Color(0xD0101014),
-                    borderWidth = 1.dp,
-                    topBorderAlpha = 0.35f
-                )
-                .padding(horizontal = 7.dp, vertical = 3.dp)
-        ) {
-            Text(
-                text = "Eyes $eyesProb% • Smile $smileProb%",
-                fontSize = 9.sp,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF10B981)
-            )
-        }
+        Text(
+            text = photo.title,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Text(
+            text = photo.subtitle,
+            fontSize = 11.sp,
+            color = Color(0xFFA1A1AA),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

@@ -24,9 +24,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DemoPhoto
 import com.threeloops.mirrorarchive.data.demo.DemoSeedData
-import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
 import com.threeloops.mirrorarchive.ui.theme.glass
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
 
@@ -218,8 +219,10 @@ fun PravahSmartStacksView(
                                             .height(84.dp)
                                             .clip(RoundedCornerShape(10.dp))
                                     ) {
-                                        DemoPhotoCanvas(
-                                            photo = candidate.demoPhoto,
+                                        AsyncImage(
+                                            model = if (candidate.demoPhoto.drawableRes != 0) candidate.demoPhoto.drawableRes else candidate.demoPhoto.imageUrl,
+                                            contentDescription = candidate.demoPhoto.title,
+                                            contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize()
                                         )
 

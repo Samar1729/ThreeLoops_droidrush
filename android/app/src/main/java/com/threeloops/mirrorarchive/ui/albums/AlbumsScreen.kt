@@ -1,6 +1,5 @@
 package com.threeloops.mirrorarchive.ui.albums
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,36 +13,25 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.threeloops.mirrorarchive.contracts.AlbumSummary
+import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.contracts.AlbumType
-import com.threeloops.mirrorarchive.data.demo.DemoPhoto
-import com.threeloops.mirrorarchive.data.demo.DemoSeedData
-import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
+import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
+import com.threeloops.mirrorarchive.data.demo.SampleMediaSeed
 import com.threeloops.mirrorarchive.ui.sandbox.NitiSandboxDialog
-import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
-import com.threeloops.mirrorarchive.ui.theme.glass
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
-
-data class SmartAlbumCarouselItem(
-    val type: AlbumType,
-    val title: String,
-    val count: Int,
-    val icon: ImageVector
-)
 
 @Composable
 fun AlbumsScreen(
@@ -55,28 +43,22 @@ fun AlbumsScreen(
     modifier: Modifier = Modifier
 ) {
     var showNitiSandbox by remember { mutableStateOf(false) }
-    var selectedAlbumFilter by remember { mutableStateOf<AlbumType?>(null) }
-    var inspectingPhoto by remember { mutableStateOf<DemoPhoto?>(null) }
+    var selectedFilter by remember { mutableStateOf("All") }
+    var inspectingPhoto by remember { mutableStateOf<DisplayPhoto?>(null) }
 
-    val carouselItems = remember {
-        listOf(
-            SmartAlbumCarouselItem(AlbumType.SCREENSHOTS, "Screenshots", 18, Icons.Outlined.Screenshot),
-            SmartAlbumCarouselItem(AlbumType.RECEIPTS, "Receipts", 12, Icons.Outlined.Receipt),
-            SmartAlbumCarouselItem(AlbumType.DOCUMENTS, "Documents", 9, Icons.Outlined.Description),
-            SmartAlbumCarouselItem(AlbumType.PEOPLE, "People", 24, Icons.Outlined.Person),
-            SmartAlbumCarouselItem(AlbumType.FOOD, "Food", 15, Icons.Outlined.Restaurant)
-        )
+    val filterPills = remember {
+        listOf("All", "Receipts", "Portraits", "Screenshots", "Documents")
     }
 
-    val displayedPhotos = remember(selectedAlbumFilter) {
-        if (selectedAlbumFilter == null) {
-            DemoSeedData.photos
-        } else {
-            DemoSeedData.photos.filter { it.albumType == selectedAlbumFilter }
-        }
+    val displayedPhotos = remember(selectedFilter) {
+        SampleMediaSeed.filterByCategory(selectedFilter)
     }
 
-    AmbientMeshBox(modifier = modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF09090B))
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -85,204 +67,112 @@ fun AlbumsScreen(
             Spacer(modifier = Modifier.height(18.dp))
 
             // ========================================================
-            // Top Header: Title + Sleek Live Telemetry Pill + Niti Disc
+            // Header: Clean white text "Vault" + ultra-subtle telemetry
             // ========================================================
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Vault",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        letterSpacing = (-0.5).sp
-                    )
-                    Text(
-                        text = "On-Device Neural Archive",
-                        fontSize = 11.sp,
-                        color = Color(0xFFA1A1AA)
-                    )
-                }
+                Text(
+                    text = "Vault",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    letterSpacing = (-0.5).sp
+                )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Sleek Live Pipeline Telemetry Pill: ● 1,248 Indexed • 42 img/s • INTERNET: NONE
+                    // Ultra-subtle monospace telemetry badge
                     Box(
                         modifier = Modifier
-                            .glass(
-                                shape = RoundedCornerShape(20.dp),
-                                backgroundColor = Color(0xDD121216),
-                                borderWidth = 1.dp,
-                                topBorderAlpha = 0.35f,
-                                bottomBorderAlpha = 0.08f
-                            )
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .background(Color(0xFF18181B), RoundedCornerShape(14.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(7.dp)
-                                    .background(Color(0xFF10B981), CircleShape)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "1,248 • 42 img/s • ",
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = Color(0xFFE4E4E7)
-                            )
-                            Text(
-                                text = "INTERNET: NONE",
-                                fontSize = 9.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF10B981)
-                            )
-                        }
+                        Text(
+                            text = "1,248 indexed • 42 img/s • offline",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = Color(0xFFA1A1AA)
+                        )
                     }
 
-                    // Niti Sandbox Tuning Disc
+                    // Niti Sandbox Tuning Button
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .glass(
-                                shape = CircleShape,
-                                backgroundColor = Color(0x3310B981),
-                                borderWidth = 1.dp,
-                                topBorderAlpha = 0.45f,
-                                bottomBorderAlpha = 0.10f
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { showNitiSandbox = true },
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF1F1F23))
+                            .clickable { showNitiSandbox = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Tune,
-                            contentDescription = "Niti Sandbox",
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(17.dp)
+                            contentDescription = "Niti Tuning",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // ========================================================
-            // Horizontal Smart Album Carousel (True Glass Cards)
-            // Brush: White 0.10f to 0.03f with 1.dp border 0.25f to 0.04f
+            // Top Filter Carousel: Minimal, low-profile pill chips
+            // Active: Pure white bg with black text
+            // Inactive: Dark gray surface (#1F1F23) with muted white text
             // ========================================================
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 2.dp)
             ) {
-                items(carouselItems, key = { it.type.name }) { item ->
-                    val isSelected = selectedAlbumFilter == item.type
-
+                items(filterPills) { pill ->
+                    val isSelected = selectedFilter == pill
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        if (isSelected) Color(0x3310B981) else Color.White.copy(alpha = 0.10f),
-                                        if (isSelected) Color(0x1810B981) else Color.White.copy(alpha = 0.03f)
-                                    )
-                                )
-                            )
-                            .border(
-                                width = 1.dp,
-                                brush = Brush.verticalGradient(
-                                    listOf(
-                                        if (isSelected) Color(0xFF10B981) else Color.White.copy(alpha = 0.25f),
-                                        if (isSelected) Color(0x3310B981) else Color.White.copy(alpha = 0.04f)
-                                    )
-                                ),
-                                shape = RoundedCornerShape(18.dp)
-                            )
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) Color.White else Color(0xFF1F1F23))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
                             ) {
-                                selectedAlbumFilter = if (isSelected) null else item.type
+                                selectedFilter = pill
                             }
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                            .padding(horizontal = 14.dp, vertical = 7.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.title,
-                                tint = if (isSelected) Color(0xFF10B981) else Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = item.title,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "(${item.count})",
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = if (isSelected) Color(0xFF10B981) else Color(0xFFA1A1AA)
-                            )
-                        }
+                        Text(
+                            text = pill,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.Black else Color(0xFFA1A1AA)
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Filter indicator pill if active
-            if (selectedAlbumFilter != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Filtered by: ${selectedAlbumFilter?.name}",
-                        fontSize = 12.sp,
-                        color = Color(0xFF10B981),
-                        fontFamily = FontFamily.Monospace
-                    )
-                    Text(
-                        text = "Show All",
-                        fontSize = 11.sp,
-                        color = Color.White,
-                        modifier = Modifier
-                            .clickable { selectedAlbumFilter = null }
-                            .padding(4.dp)
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(16.dp))
 
             // ========================================================
-            // 2-Column Staggered Photo Grid of Demo Photos
-            // Bottom Scrim + ML Label Chip + Tap to open Drishti X-Ray
+            // 2-Column Staggered Vertical Grid showing REAL PHOTOS
+            // AspectRatio: 0.85f, clip(8.dp)
+            // Floating ML tag in top-right corner (#000000 60% alpha)
+            // Title in bold white (13.sp), subtitle in #A1A1AA (11.sp)
             // ========================================================
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 110.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(displayedPhotos, key = { it.id }) { photo ->
-                    PhotoGridCard(
+                    RealPhotoGridCard(
                         photo = photo,
                         onClick = { inspectingPhoto = photo }
                     )
@@ -306,96 +196,79 @@ fun AlbumsScreen(
 }
 
 @Composable
-fun PhotoGridCard(
-    photo: DemoPhoto,
+fun RealPhotoGridCard(
+    photo: DisplayPhoto,
     onClick: () -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(175.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f))
-                ),
-                shape = RoundedCornerShape(18.dp)
-            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onClick() }
-    ) {
-        // High-polish procedural Canvas visual
-        DemoPhotoCanvas(
-            photo = photo,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Bottom Gradient Scrim
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f)),
-                        startY = 180f
-                    )
-                )
-        )
-
-        // Top-Right X-Ray Trigger Pill
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .glass(
-                    shape = CircleShape,
-                    backgroundColor = Color.Black.copy(alpha = 0.40f),
-                    borderWidth = 1.dp,
-                    topBorderAlpha = 0.35f
-                )
-                .padding(5.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Visibility,
-                contentDescription = "Inspect ML",
-                tint = Color.White,
-                modifier = Modifier.size(11.dp)
+                indication = null,
+                onClick = onClick
             )
-        }
-
-        // Bottom Left: Primary ML Label Chip (e.g. "receipt 0.96")
+    ) {
+        // High-resolution real photo with Coil
         Box(
             modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(8.dp)
-                .glass(
-                    shape = RoundedCornerShape(8.dp),
-                    backgroundColor = Color(0xD0101014),
-                    borderWidth = 1.dp,
-                    topBorderAlpha = 0.35f,
-                    bottomBorderAlpha = 0.08f
-                )
-                .padding(horizontal = 7.dp, vertical = 3.dp)
+                .fillMaxWidth()
+                .aspectRatio(0.85f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF18181B))
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
+                contentDescription = photo.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Floating ML Tag: Tiny semi-transparent pill in top-right corner
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.60f),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        width = 0.5.dp,
+                        color = Color.White.copy(alpha = 0.20f),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .padding(horizontal = 7.dp, vertical = 3.dp)
+            ) {
                 Text(
-                    text = photo.primaryLabel,
+                    text = photo.tag,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "${photo.primaryConfidence}",
-                    fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10B981)
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFFAFAFA)
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Title in bold white (13.sp)
+        Text(
+            text = photo.title,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        // Subtitle / date in #A1A1AA (11.sp)
+        Text(
+            text = photo.subtitle,
+            fontSize = 11.sp,
+            color = Color(0xFFA1A1AA),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

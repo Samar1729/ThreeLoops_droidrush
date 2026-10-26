@@ -29,9 +29,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DemoPhoto
 import com.threeloops.mirrorarchive.data.demo.DemoSeedData
-import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
 import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
 import com.threeloops.mirrorarchive.ui.theme.glass
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
@@ -162,7 +163,7 @@ fun RaseedLedgerScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    val totalAmount = receiptDemoPhotos.sumOf { it.totalAmount ?: 0.0 }
+                    val totalAmount = receiptDemoPhotos.sumOf { it.totalDouble ?: 0.0 }
                     val totalGst = totalAmount * 0.18
 
                     Text(
@@ -265,20 +266,16 @@ fun RaseedLedgerScreen(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(40.dp)
-                                            .glass(
-                                                shape = CircleShape,
-                                                backgroundColor = Color.White.copy(alpha = 0.08f),
-                                                borderWidth = 1.dp,
-                                                topBorderAlpha = 0.35f
-                                            ),
-                                        contentAlignment = Alignment.Center
+                                            .size(42.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF18181B))
+                                            .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape)
                                     ) {
-                                        Icon(
-                                            imageVector = photo.iconVector,
+                                        AsyncImage(
+                                            model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
                                             contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(18.dp)
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize().clip(CircleShape)
                                         )
                                     }
 
@@ -313,7 +310,7 @@ fun RaseedLedgerScreen(
                                 }
 
                                 Text(
-                                    text = "₹ ${"%,.2f".format(photo.totalAmount ?: 0.0)}",
+                                    text = photo.totalAmount ?: "₹ 0.00",
                                     fontSize = 14.sp,
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.Bold,
@@ -321,7 +318,7 @@ fun RaseedLedgerScreen(
                                 )
                             }
 
-                            // Expanded Section: Actual cropped receipt Canvas + Raw OCR regex highlights
+                            // Expanded Section: Actual real photo of receipt + Raw OCR regex highlights
                             AnimatedVisibility(
                                 visible = isExpanded,
                                 enter = expandVertically() + fadeIn(),
@@ -331,21 +328,24 @@ fun RaseedLedgerScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 14.dp)
-                                ) {
-                                    // Cropped Receipt Visual Preview
+                                    ) {
+                                    // Real Receipt Photo Preview
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(180.dp)
-                                            .clip(RoundedCornerShape(14.dp))
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color(0xFF18181B))
                                             .border(
                                                 width = 1.dp,
                                                 color = Color.White.copy(alpha = 0.15f),
-                                                shape = RoundedCornerShape(14.dp)
+                                                shape = RoundedCornerShape(12.dp)
                                             )
                                     ) {
-                                        DemoPhotoCanvas(
-                                            photo = photo,
+                                        AsyncImage(
+                                            model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
+                                            contentDescription = photo.title,
+                                            contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -389,7 +389,7 @@ fun RaseedLedgerScreen(
                                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                                         ) {
                                             Text(
-                                                text = "TOTAL: ₹ ${"%,.2f".format(photo.totalAmount ?: 0.0)}",
+                                                text = "TOTAL: ${photo.totalAmount ?: "₹ 0.00"}",
                                                 fontSize = 9.sp,
                                                 fontFamily = FontFamily.Monospace,
                                                 fontWeight = FontWeight.Bold,
@@ -414,7 +414,7 @@ fun RaseedLedgerScreen(
                                                 .padding(10.dp)
                                         ) {
                                             Text(
-                                                text = photo.ocrText,
+                                                text = photo.ocrText ?: "",
                                                 fontSize = 10.sp,
                                                 fontFamily = FontFamily.Monospace,
                                                 color = Color(0xFFA1A1AA),

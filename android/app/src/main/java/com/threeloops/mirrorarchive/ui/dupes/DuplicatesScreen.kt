@@ -14,25 +14,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.threeloops.mirrorarchive.data.demo.DemoPhoto
-import com.threeloops.mirrorarchive.data.demo.DemoSeedData
-import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
-import com.threeloops.mirrorarchive.ui.theme.GlassScaffoldBackground
-import com.threeloops.mirrorarchive.ui.theme.glass
+import coil.compose.AsyncImage
+import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
+import com.threeloops.mirrorarchive.data.demo.SampleMediaSeed
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
 
 @Composable
@@ -44,17 +42,19 @@ fun DuplicatesScreen(
     val context = LocalContext.current
     var isPurged by remember { mutableStateOf(false) }
     var reclaimableMb by remember { mutableStateOf("13.2 MB") }
-    var inspectingPhoto by remember { mutableStateOf<DemoPhoto?>(null) }
+    var inspectingPhoto by remember { mutableStateOf<DisplayPhoto?>(null) }
 
-    val burstItems = remember { DemoSeedData.burstPhotos }
+    val burstItems = remember { SampleMediaSeed.burstPhotos }
     val displayedBurstItems = remember(isPurged) {
         if (isPurged) burstItems.filter { it.isWinner } else burstItems
     }
 
-    GlassScaffoldBackground {
-        Column(
-            modifier = modifier.fillMaxSize()
-        ) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF09090B))
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             // Top Bar
             Row(
                 modifier = Modifier
@@ -66,11 +66,8 @@ fun DuplicatesScreen(
                     onClick = onBackClick,
                     modifier = Modifier
                         .size(40.dp)
-                        .glass(
-                            shape = CircleShape,
-                            backgroundColor = Color.White.copy(alpha = 0.08f),
-                            topBorderAlpha = 0.35f
-                        )
+                        .clip(CircleShape)
+                        .background(Color(0xFF1F1F23))
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
@@ -102,17 +99,14 @@ fun DuplicatesScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 40.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Reclaimable Storage Summary Glass Card
+                // Reclaimable Storage Summary Card
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .glass(
-                                shape = RoundedCornerShape(20.dp),
-                                backgroundColor = Color(0xDD141418),
-                                topBorderAlpha = 0.35f,
-                                bottomBorderAlpha = 0.08f
-                            )
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF141418))
+                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                     ) {
                         Row(
                             modifier = Modifier.padding(18.dp),
@@ -153,15 +147,9 @@ fun DuplicatesScreen(
                                         containerColor = Color.White,
                                         contentColor = Color.Black
                                     ),
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(20.dp),
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.AutoAwesome,
-                                        contentDescription = null,
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = "Keep Best",
                                         fontSize = 13.sp,
@@ -172,13 +160,9 @@ fun DuplicatesScreen(
                             } else {
                                 Box(
                                     modifier = Modifier
-                                        .glass(
-                                            shape = RoundedCornerShape(12.dp),
-                                            backgroundColor = Color(0x2210B981),
-                                            borderWidth = 1.dp,
-                                            topBorderAlpha = 0.40f
-                                        )
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        .background(Color(0x2210B981), RoundedCornerShape(12.dp))
+                                        .border(1.dp, Color(0xFF10B981).copy(alpha = 0.40f), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 12.dp, vertical = 7.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
@@ -207,12 +191,9 @@ fun DuplicatesScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .glass(
-                                shape = RoundedCornerShape(20.dp),
-                                backgroundColor = Color(0xDD141418),
-                                topBorderAlpha = 0.30f,
-                                bottomBorderAlpha = 0.06f
-                            )
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF141418))
+                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
@@ -236,12 +217,8 @@ fun DuplicatesScreen(
 
                                 Box(
                                     modifier = Modifier
-                                        .glass(
-                                            shape = RoundedCornerShape(8.dp),
-                                            backgroundColor = Color.White.copy(alpha = 0.08f),
-                                            borderWidth = 1.dp,
-                                            topBorderAlpha = 0.30f
-                                        )
+                                        .background(Color(0xFF1F1F23), RoundedCornerShape(8.dp))
+                                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
                                         .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
                                     Text(
@@ -256,7 +233,7 @@ fun DuplicatesScreen(
 
                             Spacer(modifier = Modifier.height(14.dp))
 
-                            // Horizontal list of burst candidates with dynamic math badges
+                            // Horizontal list of real burst photography shots
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 contentPadding = PaddingValues(vertical = 4.dp)
@@ -286,41 +263,43 @@ fun DuplicatesScreen(
 
 @Composable
 private fun BurstPhotoItemCard(
-    photo: DemoPhoto,
+    photo: DisplayPhoto,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .width(170.dp)
-            .height(200.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .height(210.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF18181B))
             .border(
                 width = if (photo.isWinner) 2.dp else 1.dp,
-                color = if (photo.isWinner) Color(0xFF10B981) else Color.White.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(16.dp)
+                color = if (photo.isWinner) Color(0xFF10B981) else Color.White.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick() }
     ) {
-        // Real Procedural Photo Visual
-        DemoPhotoCanvas(
-            photo = photo,
-            modifier = Modifier.fillMaxSize(),
-            showLandmarks = photo.faces.isNotEmpty()
+        // Real photo loaded via Coil
+        AsyncImage(
+            model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
+            contentDescription = photo.title,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
 
-        // Gradient Scrim
+        // Gradient Scrim at bottom
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                    Brush.verticalGradient(
                         colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.90f)),
-                        startY = 180f
+                        startY = 200f
                     )
                 )
         )
 
-        // Overlaid Exact Math Badges as specified
+        // Overlaid Exact Math Badges
         Box(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -332,51 +311,40 @@ private fun BurstPhotoItemCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .glass(
-                            shape = RoundedCornerShape(8.dp),
-                            backgroundColor = Color(0xE0103826),
-                            borderWidth = 1.dp,
-                            topBorderAlpha = 0.60f
-                        )
+                        .background(Color(0xEE103826), RoundedCornerShape(8.dp))
+                        .border(1.dp, Color(0xFF10B981), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
                     Column {
                         Text(
-                            text = "★ BEST • Score 0.92",
+                            text = "★ BEST • Score 0.98",
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF10B981)
                         )
                         Text(
-                            text = "(Sharpness 91 | Face 0.94)",
-                            fontSize = 8.sp,
+                            text = "Sharpness 168 | Face 0.96",
+                            fontSize = 9.sp,
                             fontFamily = FontFamily.Monospace,
-                            color = Color(0xFFA7F3D0)
+                            color = Color(0xFFD1FAE5)
                         )
                     }
                 }
             } else {
-                // Loser Card: Red/Zinc badge
-                val badgeText = photo.rejectionReason ?: "Drop • Low Quality"
+                // Loser / Drop Card
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .glass(
-                            shape = RoundedCornerShape(8.dp),
-                            backgroundColor = Color(0xE027272A),
-                            borderWidth = 1.dp,
-                            topBorderAlpha = 0.40f
-                        )
+                        .background(Color(0xEE27272A), RoundedCornerShape(8.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = badgeText,
+                        text = photo.rejectionReason ?: "Drop • Sub-optimal",
                         fontSize = 9.sp,
                         fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFEF4444),
-                        lineHeight = 12.sp
+                        color = Color(0xFFA1A1AA)
                     )
                 }
             }

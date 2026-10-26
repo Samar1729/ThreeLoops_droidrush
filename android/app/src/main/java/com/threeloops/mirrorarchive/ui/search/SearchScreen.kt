@@ -30,12 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DemoPhoto
 import com.threeloops.mirrorarchive.data.demo.DemoSeedData
 import com.threeloops.mirrorarchive.search.SearchMode
 import com.threeloops.mirrorarchive.search.SearchViewModel
-import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
 import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
 import com.threeloops.mirrorarchive.ui.theme.TextMuted
 import com.threeloops.mirrorarchive.ui.theme.TextPrimary
@@ -366,27 +368,26 @@ private fun OcrResultCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .glass(
-                shape = RoundedCornerShape(16.dp),
-                backgroundColor = Color(0xDD141418),
-                borderWidth = 1.dp,
-                topBorderAlpha = 0.35f,
-                bottomBorderAlpha = 0.08f
-            )
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF141418))
+            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onClick() }
+                indication = null,
+                onClick = onClick
+            )
     ) {
-        // Photo Visual
+        // Real Photo Visual
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(130.dp)
+                .background(Color(0xFF18181B))
         ) {
-            DemoPhotoCanvas(
-                photo = photo,
+            AsyncImage(
+                model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
+                contentDescription = photo.title,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -395,19 +396,14 @@ private fun OcrResultCard(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .glass(
-                        shape = CircleShape,
-                        backgroundColor = Color.Black.copy(alpha = 0.40f),
-                        borderWidth = 1.dp,
-                        topBorderAlpha = 0.35f
-                    )
-                    .padding(4.dp)
+                    .background(Color.Black.copy(alpha = 0.60f), CircleShape)
+                    .padding(5.dp)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Visibility,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(10.dp)
+                    modifier = Modifier.size(11.dp)
                 )
             }
         }
@@ -429,7 +425,7 @@ private fun OcrResultCard(
 
                 if (photo.totalAmount != null) {
                     Text(
-                        text = "₹ ${"%,.2f".format(photo.totalAmount)}",
+                        text = photo.totalAmount,
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
@@ -442,7 +438,7 @@ private fun OcrResultCard(
 
             // Highlighted OCR Snippet Text
             val snippet = remember(photo, query) {
-                val lines = photo.ocrText?.lines() ?: emptyList()
+                val lines = photo.rawOcrText?.lines() ?: emptyList()
                 val matchLine = lines.firstOrNull { it.contains(query, ignoreCase = true) }
                     ?: lines.firstOrNull { it.contains("GSTIN", ignoreCase = true) }
                     ?: lines.firstOrNull { it.contains("TOTAL", ignoreCase = true) }
@@ -481,68 +477,65 @@ private fun TagResultCard(
     photo: DemoPhoto,
     onClick: () -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(170.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.04f))
-                ),
-                shape = RoundedCornerShape(16.dp)
-            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onClick() }
+                indication = null,
+                onClick = onClick
+            )
     ) {
-        DemoPhotoCanvas(
-            photo = photo,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Gradient Scrim
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.80f)),
-                        startY = 180f
-                    )
-                )
-        )
-
-        // Primary Tag Pill
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(8.dp)
-                .glass(
-                    shape = RoundedCornerShape(8.dp),
-                    backgroundColor = Color(0xD0101014),
-                    borderWidth = 1.dp,
-                    topBorderAlpha = 0.35f
-                )
-                .padding(horizontal = 7.dp, vertical = 3.dp)
+                .fillMaxWidth()
+                .aspectRatio(0.85f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF18181B))
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
+                contentDescription = photo.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Primary Tag Pill in top-right
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .background(Color.Black.copy(alpha = 0.60f), RoundedCornerShape(10.dp))
+                    .border(0.5.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 7.dp, vertical = 3.dp)
+            ) {
                 Text(
-                    text = photo.primaryLabel,
+                    text = photo.tag,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "${photo.primaryConfidence}",
-                    fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = Color(0xFF10B981)
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFFAFAFA)
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = photo.title,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Text(
+            text = photo.subtitle,
+            fontSize = 11.sp,
+            color = Color(0xFFA1A1AA),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

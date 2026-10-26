@@ -25,9 +25,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.albums.AlbumClassifier
 import com.threeloops.mirrorarchive.data.demo.DemoPhoto
-import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
+import com.threeloops.mirrorarchive.contracts.FaceInfo
+import com.threeloops.mirrorarchive.contracts.LabelResult
 import com.threeloops.mirrorarchive.ui.theme.GlassCard
 import com.threeloops.mirrorarchive.ui.theme.glass
 
@@ -180,12 +187,43 @@ fun DrishtiXRayBottomSheet(
                             bottomBorderAlpha = 0.08f
                         )
                 ) {
-                    DemoPhotoCanvas(
-                        photo = photo,
-                        modifier = Modifier.fillMaxSize(),
-                        showLandmarks = isOverlayEnabled,
-                        showBoundingBoxes = isOverlayEnabled
+                    AsyncImage(
+                        model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
+                        contentDescription = photo.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp))
                     )
+
+                    if (isOverlayEnabled) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val w = size.width
+                            val h = size.height
+
+                            // Draw Face Bounding Boxes
+                            photo.faceBox?.let { box ->
+                                val left = box.left * w
+                                val top = box.top * h
+                                val width = (box.right - box.left) * w
+                                val height = (box.bottom - box.top) * h
+                                drawRect(
+                                    color = Color(0xFF10B981),
+                                    topLeft = Offset(left, top),
+                                    size = Size(width, height),
+                                    style = Stroke(width = 3.dp.toPx())
+                                )
+                            }
+
+                            // If text/receipt, draw amber OCR bounding boxes
+                            if (photo.category == "RECEIPTS" || photo.category == "DOCUMENTS") {
+                                drawRect(
+                                    color = Color(0xFFF59E0B),
+                                    topLeft = Offset(w * 0.15f, h * 0.25f),
+                                    size = Size(w * 0.70f, h * 0.50f),
+                                    style = Stroke(width = 2.dp.toPx())
+                                )
+                            }
+                        }
+                    }
 
                     // Top Overlay Toggle Pill
                     Box(
@@ -372,7 +410,7 @@ fun DrishtiXRayBottomSheet(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    photo.labels.forEach { label ->
+                    for (label in photo.labels) {
                         Box(
                             modifier = Modifier
                                 .glass(
@@ -403,7 +441,8 @@ fun DrishtiXRayBottomSheet(
                 }
 
                 // Raw OCR Text with Regex Matches (if applicable)
-                if (photo.ocrText != null) {
+                val rawOcr = photo.ocrText
+                if (rawOcr != null) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
@@ -426,7 +465,7 @@ fun DrishtiXRayBottomSheet(
                             .padding(12.dp)
                     ) {
                         Text(
-                            text = photo.ocrText,
+                            text = rawOcr,
                             fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace,
                             color = Color(0xFFA1A1AA),
