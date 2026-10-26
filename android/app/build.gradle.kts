@@ -6,6 +6,10 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
     namespace = "com.threeloops.mirrorarchive"
     compileSdk = 35
