@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,11 +25,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.threeloops.mirrorarchive.BuildConfig
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.contracts.AlbumSummary
 import com.threeloops.mirrorarchive.contracts.AlbumType
-import com.threeloops.mirrorarchive.contracts.ScanPhase
-import com.threeloops.mirrorarchive.contracts.ScanState
 
 @Composable
 fun AlbumsScreen(
@@ -41,8 +40,9 @@ fun AlbumsScreen(
     onNavigateSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val summaries by viewModel.albumSummaries.collectAsState()
-    val scanState by viewModel.scanState.collectAsState()
+    val summaries by viewModel.albumSummaries.collectAsStateWithLifecycle()
+    val devicePhotoCount by viewModel.devicePhotoCount.collectAsStateWithLifecycle()
+    val loaderProof by viewModel.loaderProof.collectAsStateWithLifecycle()
 
     Column(
         modifier = modifier
@@ -124,42 +124,32 @@ fun AlbumsScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Indexing Status Pill if scanning
-        if (scanState.phase == ScanPhase.SCANNING) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF18181B),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 14.dp)
-                    .border(1.dp, Color(0xFF27272A), RoundedCornerShape(12.dp))
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(Color(0xFF34C759), CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Analyzing Library",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White
-                        )
-                    }
-                    Text(
-                        text = "${scanState.done} / ${scanState.total}",
-                        fontSize = 12.sp,
-                        color = Color(0xFFA1A1AA)
-                    )
+        Text(
+            text = "Photos on device: ${devicePhotoCount?.toString() ?: "…"}",
+            fontSize = 14.sp,
+            color = Color(0xFFA1A1AA)
+        )
+        if (BuildConfig.DEBUG) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = viewModel::logFirstTwoPages) {
+                    Text("Load first 50")
+                }
+                TextButton(onClick = viewModel::testLoader) {
+                    Text("Test loader")
                 }
             }
+            loaderProof?.let { result ->
+                Text(
+                    text = result,
+                    fontSize = 12.sp,
+                    color = Color(0xFFA1A1AA)
+                )
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = viewModel::startScanNow) { Text("Scan now") }
+            OutlinedButton(onClick = viewModel::cancelScan) { Text("Cancel") }
         }
 
         // Albums Grid

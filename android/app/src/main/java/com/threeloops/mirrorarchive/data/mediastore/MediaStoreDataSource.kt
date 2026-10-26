@@ -14,6 +14,13 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Query boundary consumed by the scanner and replaceable by deterministic test sources. */
+interface MediaStoreSource {
+    suspend fun query(afterId: Long, limit: Int = 50): List<MediaRow>
+    suspend fun count(): Int
+    fun currentGeneration(): Long
+}
+
 /**
  * Data source for querying images from the Android MediaStore.
  *
@@ -26,7 +33,7 @@ import javax.inject.Singleton
 @Singleton
 class MediaStoreDataSource @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) : MediaStoreSource {
 
     private companion object {
         const val TAG = "MediaStoreDataSource"
@@ -58,7 +65,7 @@ class MediaStoreDataSource @Inject constructor(
      * @param limit Maximum number of records to return (defaults to 50).
      * @return List of matching [MediaRow] items, or empty list on denial/exception.
      */
-    suspend fun query(afterId: Long, limit: Int = 50): List<MediaRow> = withContext(Dispatchers.IO) {
+    override suspend fun query(afterId: Long, limit: Int): List<MediaRow> = withContext(Dispatchers.IO) {
         val queryArgs = Bundle().apply {
             putString(ContentResolver.QUERY_ARG_SQL_SELECTION, "${MediaStore.Images.Media._ID} > ?")
             putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, arrayOf(afterId.toString()))
@@ -129,7 +136,7 @@ class MediaStoreDataSource @Inject constructor(
      *
      * @return Total image count, or 0 if cursor is null or query fails.
      */
-    suspend fun count(): Int = withContext(Dispatchers.IO) {
+    override suspend fun count(): Int = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -146,6 +153,83 @@ class MediaStoreDataSource @Inject constructor(
             Log.e(TAG, "Unexpected error counting MediaStore items", e)
             0
         }
+    }
+
+    /** Rows whose MediaStore generation changed after [generation]. */
+    suspend fun changedSince(generation: Long): List<MediaRow> = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                PROJECTION,
+                "${MediaStore.Images.Media.GENERATION_MODIFIED} > ?",
+                arrayOf(generation.toString()),
+                "${MediaStore.Images.Media._ID} ASC"
+            )?.use { cursor ->
+                val id = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                val name = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
+                val path = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.RELATIVE_PATH)
+                val added = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
+                val taken = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)
+                val gen = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.GENERATION_MODIFIED)
+                val width = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH)
+                val height = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT)
+                val size = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)
+                val mime = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.MIME_TYPE)
+                buildList {
+                    while (cursor.moveToNext()) {
+                        val mediaId = cursor.getLong(id)
+                        add(
+                            MediaRow(
+                                mediaId = mediaId,
+                                uri = uriFor(mediaId),
+                                displayName = cursor.getString(name) ?: "",
+                                relativePath = cursor.getString(path) ?: "",
+                                dateAdded = cursor.getLong(added),
+                                dateTaken = if (cursor.isNull(taken)) null else cursor.getLong(taken),
+                                generationModified = cursor.getLong(gen),
+                                width = cursor.getInt(width),
+                                height = cursor.getInt(height),
+                                sizeBytes = cursor.getLong(size),
+                                mimeType = cursor.getString(mime) ?: "image/jpeg"
+                            )
+                        )
+                    }
+                }
+            } ?: emptyList()
+        } catch (e: SecurityException) {
+            Log.w(TAG, "SecurityException while querying changed MediaStore items: ${e.message}")
+            emptyList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error querying changed MediaStore items", e)
+            emptyList()
+        }
+    }
+
+    /** All image row IDs in ascending MediaStore order. */
+    suspend fun allIds(): LongArray = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Images.Media._ID), null, null,
+                "${MediaStore.Images.Media._ID} ASC"
+            )?.use { cursor ->
+                LongArray(cursor.count).also { ids ->
+                    var index = 0
+                    while (cursor.moveToNext()) ids[index++] = cursor.getLong(0)
+                }
+            } ?: longArrayOf()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to query MediaStore IDs", e)
+            longArrayOf()
+        }
+    }
+
+    /** Current generation marker for the external MediaStore volume. */
+    override fun currentGeneration(): Long = try {
+        MediaStore.getGeneration(context, MediaStore.VOLUME_EXTERNAL)
+    } catch (e: Exception) {
+        Log.e(TAG, "Unable to read MediaStore generation", e)
+        0L
     }
 
     /**

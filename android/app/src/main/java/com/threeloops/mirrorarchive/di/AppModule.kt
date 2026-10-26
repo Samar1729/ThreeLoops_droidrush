@@ -1,13 +1,13 @@
 package com.threeloops.mirrorarchive.di
 
-import com.threeloops.mirrorarchive.data.repo.FakeImageRepository
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
+import com.threeloops.mirrorarchive.data.repo.RoomImageRepository
 import com.threeloops.mirrorarchive.dupes.DuplicateFinder
 import com.threeloops.mirrorarchive.dupes.DuplicateFinderStub
 import com.threeloops.mirrorarchive.hash.PerceptualHasher
 import com.threeloops.mirrorarchive.hash.PerceptualHasherStub
 import com.threeloops.mirrorarchive.ml.ImageAnalyzer
-import com.threeloops.mirrorarchive.ml.MlKitImageAnalyzer
+import com.threeloops.mirrorarchive.ml.ImageAnalyzerStub
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -22,18 +22,18 @@ import javax.inject.Singleton
 abstract class AppModule {
 
     /**
-     * Binds [FakeImageRepository] as the application [ImageRepository].
+     * Binds the Room-backed repository as the application [ImageRepository].
      */
     @Binds
     @Singleton
-    abstract fun bindImageRepository(impl: FakeImageRepository): ImageRepository
+    abstract fun bindImageRepository(impl: RoomImageRepository): ImageRepository
 
     /**
-     * Binds [MlKitImageAnalyzer] as the production on-device [ImageAnalyzer] component.
+     * Binds the stub analyzer while the indexing pipeline is being integrated.
      */
     @Binds
     @Singleton
-    abstract fun bindImageAnalyzer(impl: MlKitImageAnalyzer): ImageAnalyzer
+    abstract fun bindImageAnalyzer(impl: ImageAnalyzerStub): ImageAnalyzer
 
     /**
      * Binds [PerceptualHasherStub] as the [PerceptualHasher] component.

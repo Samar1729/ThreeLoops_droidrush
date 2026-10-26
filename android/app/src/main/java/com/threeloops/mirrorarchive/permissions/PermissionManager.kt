@@ -44,17 +44,19 @@ class PermissionManager @Inject constructor(
     /**
      * Returns the set of runtime permissions that should be requested on the current API level.
      *
-     * - API 34+: READ_MEDIA_IMAGES + READ_MEDIA_VISUAL_USER_SELECTED
-     * - API 33:  READ_MEDIA_IMAGES
+     * - API 34+: READ_MEDIA_IMAGES + READ_MEDIA_VISUAL_USER_SELECTED + optional notifications
+     * - API 33:  READ_MEDIA_IMAGES + optional notifications
      * - API 30-32: READ_EXTERNAL_STORAGE
      */
     fun requiredPermissions(): Array<String> = when {
         Build.VERSION.SDK_INT >= 34 -> arrayOf(
             Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+            Manifest.permission.POST_NOTIFICATIONS
         )
         Build.VERSION.SDK_INT >= 33 -> arrayOf(
-            Manifest.permission.READ_MEDIA_IMAGES
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.POST_NOTIFICATIONS
         )
         else -> arrayOf(
             Manifest.permission.READ_EXTERNAL_STORAGE

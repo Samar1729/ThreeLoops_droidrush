@@ -2,7 +2,6 @@ package com.threeloops.mirrorarchive.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.threeloops.mirrorarchive.albums.AlbumRules
 import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -75,8 +74,6 @@ class SearchViewModel @Inject constructor(
             } else {
                 val startTime = System.currentTimeMillis()
                 val flow = if (currentMode == SearchMode.TAGS) {
-                    val synonyms = AlbumRules.synonyms[q.trim().lowercase()] ?: emptyList()
-                    val queryWithSynonyms = listOf(q.trim()) + synonyms
                     repository.searchByTag(q.trim())
                 } else {
                     repository.searchByText(q.trim())
