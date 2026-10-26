@@ -43,6 +43,7 @@ fun AlbumsScreen(
 ) {
     val summaries by viewModel.albumSummaries.collectAsState()
     val scanState by viewModel.scanState.collectAsState()
+    val devicePhotoCount by viewModel.devicePhotoCount.collectAsState()
 
     Column(
         modifier = modifier
@@ -123,6 +124,15 @@ fun AlbumsScreen(
         }
 
         Spacer(modifier = Modifier.height(14.dp))
+
+        Text(
+            text = "Photos on device: ${devicePhotoCount?.toString() ?: \"…\"}",
+            fontSize = 14.sp,
+            color = Color(0xFFA1A1AA)
+        )
+        TextButton(onClick = viewModel::logFirstTwoPages) {
+            Text("Load first 50")
+        }
 
         // Indexing Status Pill if scanning
         if (scanState.phase == ScanPhase.SCANNING) {

@@ -148,6 +148,83 @@ class MediaStoreDataSource @Inject constructor(
         }
     }
 
+    /** Rows whose MediaStore generation changed after [generation]. */
+    suspend fun changedSince(generation: Long): List<MediaRow> = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                PROJECTION,
+                "${MediaStore.Images.Media.GENERATION_MODIFIED} > ?",
+                arrayOf(generation.toString()),
+                "${MediaStore.Images.Media._ID} ASC"
+            )?.use { cursor ->
+                val id = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                val name = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
+                val path = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.RELATIVE_PATH)
+                val added = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
+                val taken = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)
+                val gen = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.GENERATION_MODIFIED)
+                val width = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.WIDTH)
+                val height = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.HEIGHT)
+                val size = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)
+                val mime = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.MIME_TYPE)
+                buildList {
+                    while (cursor.moveToNext()) {
+                        val mediaId = cursor.getLong(id)
+                        add(
+                            MediaRow(
+                                mediaId = mediaId,
+                                uri = uriFor(mediaId),
+                                displayName = cursor.getString(name) ?: "",
+                                relativePath = cursor.getString(path) ?: "",
+                                dateAdded = cursor.getLong(added),
+                                dateTaken = if (cursor.isNull(taken)) null else cursor.getLong(taken),
+                                generationModified = cursor.getLong(gen),
+                                width = cursor.getInt(width),
+                                height = cursor.getInt(height),
+                                sizeBytes = cursor.getLong(size),
+                                mimeType = cursor.getString(mime) ?: "image/jpeg"
+                            )
+                        )
+                    }
+                }
+            } ?: emptyList()
+        } catch (e: SecurityException) {
+            Log.w(TAG, "SecurityException while querying changed MediaStore items: ${e.message}")
+            emptyList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error querying changed MediaStore items", e)
+            emptyList()
+        }
+    }
+
+    /** All image row IDs in ascending MediaStore order. */
+    suspend fun allIds(): LongArray = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                arrayOf(MediaStore.Images.Media._ID), null, null,
+                "${MediaStore.Images.Media._ID} ASC"
+            )?.use { cursor ->
+                LongArray(cursor.count).also { ids ->
+                    var index = 0
+                    while (cursor.moveToNext()) ids[index++] = cursor.getLong(0)
+                }
+            } ?: longArrayOf()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to query MediaStore IDs", e)
+            longArrayOf()
+        }
+    }
+
+    /** Current generation marker for the external MediaStore volume. */
+    fun currentGeneration(): Long = try {
+        MediaStore.getGeneration(context, MediaStore.VOLUME_EXTERNAL)
+    } catch (e: Exception) {
+        Log.e(TAG, "Unable to read MediaStore generation", e)
+        0L
+    }
+
     /**
      * Checks whether an image at the specified [uri] exists and is readable.
      *
