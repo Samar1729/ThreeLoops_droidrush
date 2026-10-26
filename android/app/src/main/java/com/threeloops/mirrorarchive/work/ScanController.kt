@@ -128,6 +128,8 @@ class ScanController @Inject constructor(
         if (state == null) return ScanProgress(ScanPhase.IDLE, 0, 0)
         val phase = when {
             state.phase == ScanPhase.SYNCING -> ScanPhase.SYNCING
+            state.phase == ScanPhase.COMPLETE -> ScanPhase.COMPLETE
+            state.phase == ScanPhase.FAILED -> ScanPhase.FAILED
             state.totalCount == 0L && state.processedCount == 0L -> ScanPhase.IDLE
             state.processedCount >= state.totalCount -> ScanPhase.COMPLETE
             else -> ScanPhase.PAUSED

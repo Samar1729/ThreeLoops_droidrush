@@ -18,7 +18,7 @@ import com.threeloops.mirrorarchive.R
 import com.threeloops.mirrorarchive.contracts.ScanPhase
 import com.threeloops.mirrorarchive.data.db.ScanStateDao
 import com.threeloops.mirrorarchive.data.db.ScanStateEntity
-import com.threeloops.mirrorarchive.data.mediastore.MediaStoreDataSource
+import com.threeloops.mirrorarchive.data.mediastore.MediaStoreSource
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -45,7 +45,7 @@ class IndexWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted params: WorkerParameters,
     private val repository: ImageRepository,
-    private val mediaStore: MediaStoreDataSource,
+    private val mediaStore: MediaStoreSource,
     private val pipeline: IndexPipeline,
     private val scanStateDao: ScanStateDao
 ) : CoroutineWorker(appContext, params) {
@@ -185,7 +185,7 @@ class IndexWorker @AssistedInject constructor(
             )
         }
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_indexing)
             .setContentTitle("Indexing photos ($done/$total)")
             .setContentText("Scanning photos on this device")
             .setOngoing(true)

@@ -13,6 +13,7 @@ import com.threeloops.mirrorarchive.contracts.ScanState
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import com.threeloops.mirrorarchive.data.mediastore.MediaStoreDataSource
 import com.threeloops.mirrorarchive.data.mediastore.BitmapLoader
+import com.threeloops.mirrorarchive.work.ScanController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,8 @@ import javax.inject.Inject
 class AlbumsViewModel @Inject constructor(
     private val repository: ImageRepository,
     private val mediaStore: MediaStoreDataSource,
-    private val bitmapLoader: BitmapLoader
+    private val bitmapLoader: BitmapLoader,
+    private val scanController: ScanController
 ) : ViewModel() {
 
     private val _devicePhotoCount = MutableStateFlow<Int?>(null)
@@ -83,6 +85,10 @@ class AlbumsViewModel @Inject constructor(
             _loaderProof.value = "$photoResult; bad URI returned null: $badUriReturnedNull"
         }
     }
+
+    fun startScanNow() = scanController.start(ignoreConstraints = true)
+
+    fun cancelScan() = scanController.cancel()
 
     val albumSummaries: StateFlow<List<AlbumSummary>> = repository.albumSummaries()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

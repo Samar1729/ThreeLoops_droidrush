@@ -5,11 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.threeloops.mirrorarchive.permissions.OnboardingPrefs
 import com.threeloops.mirrorarchive.permissions.PermissionManager
 import com.threeloops.mirrorarchive.permissions.PermissionState
+import com.threeloops.mirrorarchive.contracts.ScanPhase
+import com.threeloops.mirrorarchive.work.ScanController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -53,7 +57,8 @@ fun resolveGateDestination(
 @HiltViewModel
 class MainViewModel @Inject constructor(
     onboardingPrefs: OnboardingPrefs,
-    permissionManager: PermissionManager
+    permissionManager: PermissionManager,
+    private val scanController: ScanController
 ) : ViewModel() {
 
     /**
@@ -69,4 +74,23 @@ class MainViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = AppNavigationState.Loading
     )
+
+    val scanProgress = scanController.progress()
+
+    /** Start the first scan once media access is ready, or resume an interrupted first scan. */
+    fun startInitialScanIfNeeded() {
+        viewModelScope.launch {
+            val progress = scanProgress.first()
+            if (progress.phase == ScanPhase.IDLE ||
+                progress.phase == ScanPhase.PAUSED ||
+                progress.phase == ScanPhase.FAILED
+            ) {
+                scanController.start()
+            }
+        }
+    }
+
+    fun startScanNow() = scanController.start(ignoreConstraints = true)
+
+    fun cancelScan() = scanController.cancel()
 }

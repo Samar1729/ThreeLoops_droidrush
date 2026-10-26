@@ -14,6 +14,13 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Query boundary consumed by the scanner and replaceable by deterministic test sources. */
+interface MediaStoreSource {
+    suspend fun query(afterId: Long, limit: Int = 50): List<MediaRow>
+    suspend fun count(): Int
+    fun currentGeneration(): Long
+}
+
 /**
  * Data source for querying images from the Android MediaStore.
  *
@@ -26,7 +33,7 @@ import javax.inject.Singleton
 @Singleton
 class MediaStoreDataSource @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) : MediaStoreSource {
 
     private companion object {
         const val TAG = "MediaStoreDataSource"
@@ -58,7 +65,7 @@ class MediaStoreDataSource @Inject constructor(
      * @param limit Maximum number of records to return (defaults to 50).
      * @return List of matching [MediaRow] items, or empty list on denial/exception.
      */
-    suspend fun query(afterId: Long, limit: Int = 50): List<MediaRow> = withContext(Dispatchers.IO) {
+    override suspend fun query(afterId: Long, limit: Int): List<MediaRow> = withContext(Dispatchers.IO) {
         val queryArgs = Bundle().apply {
             putString(ContentResolver.QUERY_ARG_SQL_SELECTION, "${MediaStore.Images.Media._ID} > ?")
             putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, arrayOf(afterId.toString()))
@@ -129,7 +136,7 @@ class MediaStoreDataSource @Inject constructor(
      *
      * @return Total image count, or 0 if cursor is null or query fails.
      */
-    suspend fun count(): Int = withContext(Dispatchers.IO) {
+    override suspend fun count(): Int = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -218,7 +225,7 @@ class MediaStoreDataSource @Inject constructor(
     }
 
     /** Current generation marker for the external MediaStore volume. */
-    fun currentGeneration(): Long = try {
+    override fun currentGeneration(): Long = try {
         MediaStore.getGeneration(context, MediaStore.VOLUME_EXTERNAL)
     } catch (e: Exception) {
         Log.e(TAG, "Unable to read MediaStore generation", e)

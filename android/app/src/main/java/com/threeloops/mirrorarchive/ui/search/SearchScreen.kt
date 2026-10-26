@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,10 +37,10 @@ fun SearchScreen(
     onImageClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val query by viewModel.query.collectAsState()
-    val mode by viewModel.mode.collectAsState()
-    val suggestions by viewModel.suggestions.collectAsState()
-    val uiState by viewModel.results.collectAsState()
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    val mode by viewModel.mode.collectAsStateWithLifecycle()
+    val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
+    val uiState by viewModel.results.collectAsStateWithLifecycle()
 
     Column(
         modifier = modifier

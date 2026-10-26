@@ -47,3 +47,43 @@ No contract change requests identified. Frozen signatures remain unchanged; any 
 - `./gradlew compileDebugAndroidTestKotlin` — **PASS**; no connected device was available to execute the instrumentation tests.
 - The assembled debug merged manifest at `android/app/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml` has no `android.permission.INTERNET` permission element. The app manifest removes the dependency-added permission to preserve the offline requirement.
 - The machine's ignored Gradle JVM criteria pointed to a missing VS Code JRE `jlink`. Verification ran with the installed JDK 17 while temporarily moving that ignored criteria file; it was restored after each command.
+
+## R-5 to R-7 implementation notes
+
+### Implemented
+
+- **R-5 — Plain Room schema and data access:** Added images, labels, album entries, faces, hash buckets, scan state, skipped-image, and pipeline-stat entities. The database enables foreign keys, exports schema JSON, and uses destructive migration fallback during development. DAOs save image/child batches atomically, preserve generated image IDs, query album/search/face/blur data, and expose checkpoint and skip state. Instrumented DAO tests cover 1,000 rows over batches, reopen persistence, prefix search, cascade deletion, album summaries, updates by MediaStore ID, and idempotent skips.
+- **R-6 — Room repository:** Replaced the runtime fake repository binding with `RoomImageRepository`. It maps indexed records to Room entities, lowercases and de-duplicates labels, writes eight dHash byte buckets, tracks pipeline version and checkpoints, expands tag synonyms with AND across query tokens, and exposes real Room-backed flows for albums, OCR, suggestions, faces, blur, and duplicates. Repository instrumentation tests cover two-token search, synonyms, and live flow emissions.
+- **R-7 — Resumable scan and UI:** Added `ScanController` unique work scheduling and persisted progress, plus a Hilt `IndexWorker` that scans MediaStore in ascending `_id` pages of 50 with up to three images processed concurrently. Each completed page advances the checkpoint even when some or all rows are skipped. The worker writes source-row progress, pauses on cancellation, reports revoked media access as FAILED, and uses a `dataSync` foreground notification. The app configures WorkManager with Hilt's worker factory. The main scaffold shows live queued/scanning/paused/failed/complete states; Albums exposes **Scan now** and **Cancel**, and launches an initial or resumed scan after media access is ready. Albums, Search, and People observe the Room repository flows. A testable `MediaStoreSource` boundary supports the fake-source worker instrumentation tests for completion, restart without repeated IDs, and corrupt-image skip/checkpoint behavior.
+
+### Assumptions
+
+- The existing `IndexedImage` base fields remain the frozen contract; optional descriptive metadata, face/albums data, and pipeline version use the existing defaults.
+- MediaStore `_id` is the durable keyset checkpoint. A checkpoint advances only after the whole page has been processed and persisted; cancellation during a page safely repeats that page on restart.
+- Progress counts source rows, including rows skipped by the image pipeline. Persisted image count may therefore be lower than scan progress.
+- A partial Android 14+ photo grant scans only the images visible to the app. Notification permission is optional; WorkManager foreground execution continues if notifications are denied.
+- R-7 uses the stub analyzer and hasher bindings while the pipeline is integrated. The MediaStore/thumbnail/worker paths are real; photo analysis quality is not represented by the stubs.
+- The fake-source worker tests exercise WorkManager with a real `IndexWorker`, repository fixture, pipeline, skip recording, and scan-state behavior. They do not replace on-device validation against a personal gallery or simulate Android process death at the OS level.
+
+### Manual verification steps for R-5 to R-7
+
+1. **R-5 schema and DAOs:** Run `./gradlew :app:connectedDebugAndroidTest` on an emulator/device. Confirm the Room DAO tests pass, including the 1,000-row on-disk close/reopen checkpoint case, child cascades, label prefix cases, album summary cover, mediaId update, and repeated skipped insert.
+2. **R-6 live repository:** Run the connected instrumented tests and confirm two-token AND search, synonym expansion, and a new tag appearing in a collector without restarting the flow. The Albums, tag search, and People screens now observe repository flows. Current R-7 stub analyzer returns no labels/faces, so those result screens can be empty until a real analyzer is selected.
+3. **R-7 completion and progress:** Grant image access, open Albums, and confirm the initial scan starts. Confirm the top banner advances through `Indexing N / total` to complete. For a controlled 1,000-photo run, use an emulator/device with 1,000 generated MediaStore images and confirm the run reaches `1,000 / 1,000` without a crash.
+4. **R-7 restart:** Start a scan over a large gallery, force-stop the app after progress advances, relaunch, and confirm the work resumes from its persisted `_id` checkpoint without repeating saved pages.
+5. **R-7 cancellation and manual controls:** Tap **Scan now**, verify the unconstrained scan begins, then tap **Cancel** and confirm the banner reports paused while the checkpoint remains. Start again and verify it resumes.
+6. **R-7 corrupt media and permission revoke:** Include an unreadable/corrupt URI, confirm it is recorded as skipped and the checkpoint passes its ID. During a separate long run, revoke photo permission in system Settings; confirm the run stops in FAILED and the app remains usable. Restore permission and reopen to resume the incomplete initial scan.
+
+### Additional R-7 dependencies
+
+- AndroidX Hilt Work: **1.2.0**.
+- AndroidX Work testing: **2.10.0** (same version as WorkManager runtime).
+
+## Verification run for R-7d
+
+- `./gradlew assembleDebug` — **PASS**.
+- `./gradlew testDebugUnitTest` — **PASS**.
+- `./gradlew compileDebugAndroidTestKotlin` — **PASS**; worker and prior DAO/repository/loader instrumentation sources compile.
+- `./gradlew connectedDebugAndroidTest` — **NOT RUN**: Gradle built the instrumentation APK, then reported `No connected devices!` at `:app:connectedDebugAndroidTest`. The three worker integration cases and existing instrumentation tests still need execution on an emulator/device.
+- The fake-source completion test scans 1,000 rows; cancellation/resume and corrupt-row checkpoint cases are included in `IndexWorkerInstrumentedTest` but are not claimed as passing until run on a device.
+- Manual 1,000-photo gallery, force-stop/resume, and mid-scan permission-revoke checks remain device validation items.

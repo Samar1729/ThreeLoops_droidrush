@@ -55,6 +55,8 @@ Mirror Archive is designed with an offline-first, strictly on-device architectur
 
 `ScanController` uses WorkManager's unique scan names and the persisted Room checkpoint to report progress across process restarts. `IDLE` means no scan has run; `QUEUED` is accepted work waiting to start; `SCANNING` is active processing; `PAUSED` is retrying, stopped, cancelled, or interrupted before the checkpoint reached the total; `SYNCING` is MediaStore reconciliation; `COMPLETE` means the scan reached its total or WorkManager succeeded; and `FAILED` means WorkManager reported a terminal failure. A full rescan resets the checkpoint and processed count but leaves indexed rows available until refreshed.
 
+The main scaffold displays this state above the active screen. On Albums, **Scan now** starts an unconstrained run and **Cancel** keeps the saved checkpoint for the next run. When image permission is granted, the app starts or resumes an incomplete first scan. The worker reads MediaStore rows in ascending `_id` pages of 50, records skipped images, and advances its checkpoint after each whole page. R-7 currently binds stub analysis and hashing implementations; database-backed UI screens will contain only the metadata those configured pipeline components produce.
+
 ```
 android/app/src/main/java/com/threeloops/mirrorarchive/
 ├── ml/
