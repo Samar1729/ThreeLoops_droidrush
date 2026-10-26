@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.threeloops.mirrorarchive.BuildConfig
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.contracts.AlbumSummary
 import com.threeloops.mirrorarchive.contracts.AlbumType
@@ -44,6 +45,7 @@ fun AlbumsScreen(
     val summaries by viewModel.albumSummaries.collectAsState()
     val scanState by viewModel.scanState.collectAsState()
     val devicePhotoCount by viewModel.devicePhotoCount.collectAsState()
+    val loaderProof by viewModel.loaderProof.collectAsState()
 
     Column(
         modifier = modifier
@@ -130,8 +132,22 @@ fun AlbumsScreen(
             fontSize = 14.sp,
             color = Color(0xFFA1A1AA)
         )
-        TextButton(onClick = viewModel::logFirstTwoPages) {
-            Text("Load first 50")
+        if (BuildConfig.DEBUG) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = viewModel::logFirstTwoPages) {
+                    Text("Load first 50")
+                }
+                TextButton(onClick = viewModel::testLoader) {
+                    Text("Test loader")
+                }
+            }
+            loaderProof?.let { result ->
+                Text(
+                    text = result,
+                    fontSize = 12.sp,
+                    color = Color(0xFFA1A1AA)
+                )
+            }
         }
 
         // Indexing Status Pill if scanning
