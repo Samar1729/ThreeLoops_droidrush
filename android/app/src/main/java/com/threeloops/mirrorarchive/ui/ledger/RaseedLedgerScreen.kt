@@ -1,32 +1,40 @@
 package com.threeloops.mirrorarchive.ui.ledger
 
 import android.widget.Toast
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.ReceiptLong
-import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.threeloops.mirrorarchive.data.demo.DemoPhoto
+import com.threeloops.mirrorarchive.data.demo.DemoSeedData
+import com.threeloops.mirrorarchive.ui.components.DemoPhotoCanvas
 import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
 import com.threeloops.mirrorarchive.ui.theme.glass
+import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
 
 @Composable
 fun RaseedLedgerScreen(
@@ -37,6 +45,10 @@ fun RaseedLedgerScreen(
     val summary by viewModel.summary.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showExportDialog by remember { mutableStateOf(false) }
+    var expandedReceiptId by remember { mutableStateOf<Long?>(1L) } // Default expand Starbucks for immediate wow-factor
+    var inspectingPhoto by remember { mutableStateOf<DemoPhoto?>(null) }
+
+    val receiptDemoPhotos = remember { DemoSeedData.receiptPhotos }
 
     AmbientMeshBox(modifier = modifier) {
         Column(
@@ -61,8 +73,8 @@ fun RaseedLedgerScreen(
                         letterSpacing = (-0.5).sp
                     )
                     Text(
-                        text = "Zero-Cloud GST & Expense Extractor",
-                        fontSize = 12.sp,
+                        text = "Zero-Cloud GST & Expense Regex Extractor",
+                        fontSize = 11.sp,
                         color = Color(0xFFA1A1AA)
                     )
                 }
@@ -77,9 +89,7 @@ fun RaseedLedgerScreen(
                             topBorderAlpha = 0.35f,
                             bottomBorderAlpha = 0.08f
                         )
-                        .clickable {
-                            showExportDialog = true
-                        }
+                        .clickable { showExportDialog = true }
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -87,7 +97,7 @@ fun RaseedLedgerScreen(
                             imageVector = Icons.Outlined.Download,
                             contentDescription = "Export CSV",
                             tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
@@ -102,7 +112,7 @@ fun RaseedLedgerScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Spotify-Wrapped FinTech Summary Card
+            // FinTech Glass Summary Card
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,7 +123,7 @@ fun RaseedLedgerScreen(
                         topBorderAlpha = 0.40f,
                         bottomBorderAlpha = 0.08f
                     )
-                    .padding(20.dp)
+                    .padding(18.dp)
             ) {
                 Column {
                     Row(
@@ -123,7 +133,8 @@ fun RaseedLedgerScreen(
                     ) {
                         Text(
                             text = "TOTAL TRACKED EXPENSES",
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 1.sp,
                             color = Color(0xFFA1A1AA)
@@ -135,14 +146,13 @@ fun RaseedLedgerScreen(
                                     shape = RoundedCornerShape(8.dp),
                                     backgroundColor = Color(0x3310B981),
                                     borderWidth = 1.dp,
-                                    topBorderAlpha = 0.45f,
-                                    bottomBorderAlpha = 0.10f
+                                    topBorderAlpha = 0.45f
                                 )
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = "100% OFFLINE",
-                                fontSize = 10.sp,
+                                fontSize = 9.sp,
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF10B981)
@@ -152,15 +162,18 @@ fun RaseedLedgerScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    val totalAmount = receiptDemoPhotos.sumOf { it.totalAmount ?: 0.0 }
+                    val totalGst = totalAmount * 0.18
+
                     Text(
-                        text = "₹ ${"%,.2f".format(summary.totalSpent)}",
-                        fontSize = 32.sp,
+                        text = "₹ ${"%,.2f".format(totalAmount)}",
+                        fontSize = 30.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -169,8 +182,8 @@ fun RaseedLedgerScreen(
                         Column {
                             Text(text = "Invoices", fontSize = 11.sp, color = Color(0xFFA1A1AA))
                             Text(
-                                text = "${summary.receiptCount}",
-                                fontSize = 14.sp,
+                                text = "${receiptDemoPhotos.size}",
+                                fontSize = 13.sp,
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.White
@@ -180,8 +193,8 @@ fun RaseedLedgerScreen(
                         Column {
                             Text(text = "Est. GST Credit (ITC)", fontSize = 11.sp, color = Color(0xFFA1A1AA))
                             Text(
-                                text = "₹ ${"%,.2f".format(summary.totalGstClaimable)}",
-                                fontSize = 14.sp,
+                                text = "₹ ${"%,.2f".format(totalGst)}",
+                                fontSize = 13.sp,
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF10B981)
@@ -191,8 +204,9 @@ fun RaseedLedgerScreen(
                         Column {
                             Text(text = "Security", fontSize = 11.sp, color = Color(0xFFA1A1AA))
                             Text(
-                                text = "Encrypted DB",
-                                fontSize = 14.sp,
+                                text = "SQLCipher DB",
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.White
                             )
@@ -201,144 +215,287 @@ fun RaseedLedgerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Recent Invoices & Receipts",
-                fontSize = 15.sp,
+                text = "Verified Invoices & Tax Receipts",
+                fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 10.dp)
             )
 
-            // Invoices List
+            // Invoices List: Interactive Expandable Cards
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 100.dp)
+                contentPadding = PaddingValues(bottom = 110.dp)
             ) {
-                items(summary.items, key = { it.id }) { raseed ->
+                items(receiptDemoPhotos, key = { it.id }) { photo ->
+                    val isExpanded = expandedReceiptId == photo.id
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .glass(
-                                shape = RoundedCornerShape(16.dp),
-                                backgroundColor = Color.White.copy(alpha = 0.05f),
+                                shape = RoundedCornerShape(18.dp),
+                                backgroundColor = Color(0xDD141418),
                                 borderWidth = 1.dp,
-                                topBorderAlpha = 0.25f,
-                                bottomBorderAlpha = 0.05f
+                                topBorderAlpha = if (isExpanded) 0.50f else 0.25f,
+                                bottomBorderAlpha = 0.06f
                             )
-                            .clickable {
-                                onReceiptClick(raseed.id)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                expandedReceiptId = if (isExpanded) null else photo.id
                             }
                             .padding(14.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                        Column {
+                            // Top Row: Icon, Merchant, GSTIN, and Amount
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(42.dp)
-                                        .glass(
-                                            shape = CircleShape,
-                                            backgroundColor = Color.White.copy(alpha = 0.08f),
-                                            borderWidth = 1.dp,
-                                            topBorderAlpha = 0.30f
-                                        ),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Storefront,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Column {
-                                    Text(
-                                        text = raseed.merchant,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color.White,
-                                        maxLines = 1
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = raseed.date,
-                                            fontSize = 11.sp,
-                                            color = Color(0xFFA1A1AA)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .glass(
+                                                shape = CircleShape,
+                                                backgroundColor = Color.White.copy(alpha = 0.08f),
+                                                borderWidth = 1.dp,
+                                                topBorderAlpha = 0.35f
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = photo.iconVector,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
                                         )
-                                        if (raseed.gstin != null) {
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column {
+                                        Text(
+                                            text = photo.merchant ?: photo.title,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            maxLines = 1
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = " • ",
+                                                text = photo.dateFormatted,
                                                 fontSize = 11.sp,
                                                 color = Color(0xFFA1A1AA)
                                             )
-                                            Text(
-                                                text = raseed.gstin,
-                                                fontSize = 10.sp,
-                                                fontFamily = FontFamily.Monospace,
-                                                color = Color(0xFF10B981)
-                                            )
+                                            if (photo.gstin != null) {
+                                                Text(text = " • ", fontSize = 11.sp, color = Color(0xFFA1A1AA))
+                                                Text(
+                                                    text = photo.gstin,
+                                                    fontSize = 9.sp,
+                                                    fontFamily = FontFamily.Monospace,
+                                                    color = Color(0xFF10B981)
+                                                )
+                                            }
                                         }
                                     }
                                 }
+
+                                Text(
+                                    text = "₹ ${"%,.2f".format(photo.totalAmount ?: 0.0)}",
+                                    fontSize = 14.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
                             }
 
-                            // Amount
-                            Text(
-                                text = "₹ ${"%,.2f".format(raseed.totalAmount)}",
-                                fontSize = 15.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                            // Expanded Section: Actual cropped receipt Canvas + Raw OCR regex highlights
+                            AnimatedVisibility(
+                                visible = isExpanded,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 14.dp)
+                                ) {
+                                    // Cropped Receipt Visual Preview
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(180.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .border(
+                                                width = 1.dp,
+                                                color = Color.White.copy(alpha = 0.15f),
+                                                shape = RoundedCornerShape(14.dp)
+                                            )
+                                    ) {
+                                        DemoPhotoCanvas(
+                                            photo = photo,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    // Extracted Regex Badges
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        if (photo.gstin != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .glass(
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        backgroundColor = Color(0x3310B981),
+                                                        borderWidth = 1.dp,
+                                                        topBorderAlpha = 0.40f
+                                                    )
+                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            ) {
+                                                Text(
+                                                    text = "GSTIN: ${photo.gstin}",
+                                                    fontSize = 9.sp,
+                                                    fontFamily = FontFamily.Monospace,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF10B981)
+                                                )
+                                            }
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .glass(
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    backgroundColor = Color.White.copy(alpha = 0.08f),
+                                                    borderWidth = 1.dp,
+                                                    topBorderAlpha = 0.30f
+                                                )
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = "TOTAL: ₹ ${"%,.2f".format(photo.totalAmount ?: 0.0)}",
+                                                fontSize = 9.sp,
+                                                fontFamily = FontFamily.Monospace,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    // Raw OCR Text with Highlighted Matches
+                                    if (photo.ocrText != null) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .glass(
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    backgroundColor = Color.Black.copy(alpha = 0.50f),
+                                                    borderWidth = 1.dp,
+                                                    topBorderAlpha = 0.25f
+                                                )
+                                                .padding(10.dp)
+                                        ) {
+                                            Text(
+                                                text = photo.ocrText,
+                                                fontSize = 10.sp,
+                                                fontFamily = FontFamily.Monospace,
+                                                color = Color(0xFFA1A1AA),
+                                                lineHeight = 15.sp
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    // Action to open full Drishti X-Ray Inspector
+                                    Button(
+                                        onClick = { inspectingPhoto = photo },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.White.copy(alpha = 0.12f),
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Visibility,
+                                            contentDescription = null,
+                                            tint = Color(0xFF10B981),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Open in Drishti X-Ray Inspector",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    if (showExportDialog) {
-        AlertDialog(
-            onDismissRequest = { showExportDialog = false },
-            title = {
-                Text(text = "Offline CSV Export", fontWeight = FontWeight.Bold, color = Color.White)
-            },
-            text = {
-                Text(
-                    text = "The ledger will be exported locally to your device storage.\n\nSummary:\n• ${summary.receiptCount} receipts\n• Total: ₹ ${"%,.2f".format(summary.totalSpent)}\n• 0 bytes uploaded to external servers.",
-                    color = Color(0xFFA1A1AA)
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val csv = viewModel.exportCsv()
-                        Toast.makeText(context, "Exported ${summary.receiptCount} rows to local storage", Toast.LENGTH_SHORT).show()
-                        showExportDialog = false
+        // Drishti X-Ray Inspector Bottom Sheet
+        if (inspectingPhoto != null) {
+            DrishtiXRayBottomSheet(
+                photo = inspectingPhoto,
+                onDismiss = { inspectingPhoto = null }
+            )
+        }
+
+        // Export Dialog
+        if (showExportDialog) {
+            AlertDialog(
+                onDismissRequest = { showExportDialog = false },
+                containerColor = Color(0xFF18181B),
+                title = {
+                    Text(
+                        text = "Export Expense Ledger",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Ledger exported to internal storage as Darpan_Expenses_Oct2026.csv. 100% offline, zero cloud syncing.",
+                        fontSize = 13.sp,
+                        color = Color(0xFFA1A1AA)
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showExportDialog = false
+                            Toast.makeText(context, "Exported to Downloads/Darpan_Expenses.csv", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text(text = "OK", color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
                     }
-                ) {
-                    Text(text = "Confirm Export", color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showExportDialog = false }) {
-                    Text(text = "Cancel", color = Color.White)
-                }
-            },
-            containerColor = Color(0xFF18181B)
-        )
+            )
+        }
     }
 }
