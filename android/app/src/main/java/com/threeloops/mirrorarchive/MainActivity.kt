@@ -4,20 +4,27 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -28,6 +35,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.threeloops.mirrorarchive.contracts.ImageItem
+import com.threeloops.mirrorarchive.contracts.ScanPhase
+import com.threeloops.mirrorarchive.contracts.ScanProgress
 import com.threeloops.mirrorarchive.ui.albums.AlbumDetailScreen
 import com.threeloops.mirrorarchive.ui.albums.AlbumsScreen
 import com.threeloops.mirrorarchive.ui.albums.AlbumsViewModel
@@ -76,7 +85,7 @@ fun MainNavigationApp(
     navController: NavHostController = rememberNavController(),
     viewModel: MainViewModel = hiltViewModel()
 ) {
-    val navState by viewModel.navigationState.collectAsState()
+    val navState by viewModel.navigationState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -131,6 +140,7 @@ fun MainNavigationApp(
                 }
             }
             AppNavigationState.Ready -> {
+                viewModel.startInitialScanIfNeeded()
                 if (currentRoute == Routes.ONBOARDING || currentRoute == Routes.PERMISSION_DENIED) {
                     navController.navigate(Routes.ALBUMS) {
                         popUpTo(0) { inclusive = true }
@@ -142,6 +152,10 @@ fun MainNavigationApp(
     }
 
     val isGateScreen = currentRoute == Routes.ONBOARDING || currentRoute == Routes.PERMISSION_DENIED
+
+    val scanProgress by viewModel.scanProgress.collectAsStateWithLifecycle(
+        initialValue = ScanProgress(ScanPhase.IDLE, 0, 0)
+    )
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Black,
@@ -163,11 +177,13 @@ fun MainNavigationApp(
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = calculatedStartDestination,
-            modifier = Modifier.padding(innerPadding)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            ScanProgressBanner(progress = scanProgress)
+            NavHost(
+                navController = navController,
+                startDestination = calculatedStartDestination,
+                modifier = Modifier.weight(1f)
+            ) {
             // Three main bottom tabs
             composable(Routes.ALBUMS) {
                 AlbumsScreen(
@@ -355,6 +371,36 @@ fun MainNavigationApp(
                 MetricsScreen(
                     onBackClick = { navController.popBackStack() }
                 )
+            }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScanProgressBanner(progress: ScanProgress) {
+    if (progress.phase == ScanPhase.IDLE) return
+    val label = when (progress.phase) {
+        ScanPhase.IDLE -> return
+        ScanPhase.QUEUED -> "Indexing queued"
+        ScanPhase.SCANNING -> "Indexing ${progress.done} / ${progress.total}"
+        ScanPhase.PAUSED -> "Indexing paused · ${progress.done} / ${progress.total}"
+        ScanPhase.FAILED -> "Indexing failed · ${progress.done} / ${progress.total}"
+        ScanPhase.COMPLETE -> "Indexing complete · ${progress.done} / ${progress.total}"
+        ScanPhase.SYNCING -> "Updating photo library · ${progress.done} / ${progress.total}"
+    }
+    Surface(color = Color(0xFF18181B), modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Text(text = label, color = Color.White)
+            if (progress.phase == ScanPhase.SCANNING || progress.phase == ScanPhase.QUEUED) {
+                if (progress.total > 0) {
+                    LinearProgressIndicator(
+                        progress = { (progress.done.toFloat() / progress.total).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+                    )
+                } else {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 6.dp))
+                }
             }
         }
     }

@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,6 +27,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.threeloops.mirrorarchive.BuildConfig
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.R
 import com.threeloops.mirrorarchive.contracts.AlbumSummary
@@ -46,8 +47,10 @@ fun AlbumsScreen(
     onNavigateSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val summaries by viewModel.albumSummaries.collectAsState()
-    val scanState by viewModel.scanState.collectAsState()
+    val summaries by viewModel.albumSummaries.collectAsStateWithLifecycle()
+    val scanState by viewModel.scanState.collectAsStateWithLifecycle()
+    val devicePhotoCount by viewModel.devicePhotoCount.collectAsStateWithLifecycle()
+    val loaderProof by viewModel.loaderProof.collectAsStateWithLifecycle()
 
     GlassScaffoldBackground(modifier = modifier) {
         Column(
