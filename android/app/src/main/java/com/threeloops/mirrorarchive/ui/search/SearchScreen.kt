@@ -55,12 +55,12 @@ fun SearchScreen(
     val mode by viewModel.mode.collectAsStateWithLifecycle()
     val latencyMs by viewModel.lastLatencyMs.collectAsStateWithLifecycle()
 
-    var activeChip by remember { mutableStateOf("receipt") }
+    var activeChip by remember { mutableStateOf("all") }
     var inspectingPhoto by remember { mutableStateOf<DemoPhoto?>(null) }
 
     // Quick filter chips
     val filterChips = remember {
-        listOf("all", "receipt", "invoice", "coffee", "fuel", "food", "portrait", "screenshot")
+        listOf("all", "receipt", "invoice", "coffee", "fuel", "portraits", "documents")
     }
 
     // Filter demo photos deterministically
@@ -325,7 +325,7 @@ fun SearchScreen(
                     items(matchedPhotos, key = { it.id }) { photo ->
                         OcrResultCard(
                             photo = photo,
-                            query = if (query.isNotEmpty()) query else activeChip,
+                            query = if (query.isNotEmpty()) query else if (activeChip != "all") activeChip else "",
                             onClick = { inspectingPhoto = photo }
                         )
                     }
@@ -439,24 +439,36 @@ private fun OcrResultCard(
             // Highlighted OCR Snippet Text
             val snippet = remember(photo, query) {
                 val lines = photo.rawOcrText?.lines() ?: emptyList()
-                val matchLine = lines.firstOrNull { it.contains(query, ignoreCase = true) }
+                val matchLine = if (query.isNotEmpty()) {
+                    lines.firstOrNull { it.contains(query, ignoreCase = true) }
+                } else null
+                (matchLine
                     ?: lines.firstOrNull { it.contains("GSTIN", ignoreCase = true) }
                     ?: lines.firstOrNull { it.contains("TOTAL", ignoreCase = true) }
-                    ?: lines.firstOrNull() ?: "MATCHED OCR"
-                matchLine.trim()
+                    ?: lines.firstOrNull { it.contains("RS.", ignoreCase = true) }
+                    ?: lines.firstOrNull() ?: "MATCHED OCR").trim()
+            }
+
+            val highlightTarget = remember(snippet, query) {
+                if (query.isNotEmpty() && snippet.contains(query, ignoreCase = true)) {
+                    query
+                } else {
+                    listOf("GSTIN", "TOTAL", "RS.", "INR", "BELLMAN-FORD", "CONSENSUS", "COROUTINES", "TECH KRITI")
+                        .firstOrNull { snippet.contains(it, ignoreCase = true) } ?: ""
+                }
             }
 
             Text(
                 text = buildAnnotatedString {
                     val lowerSnippet = snippet.lowercase()
-                    val lowerQ = query.lowercase().trim()
-                    val startIndex = if (lowerQ.isNotEmpty()) lowerSnippet.indexOf(lowerQ) else -1
+                    val lowerTarget = highlightTarget.lowercase().trim()
+                    val startIndex = if (lowerTarget.isNotEmpty()) lowerSnippet.indexOf(lowerTarget) else -1
                     if (startIndex != -1) {
                         append(snippet.substring(0, startIndex))
                         withStyle(style = SpanStyle(color = Color(0xFF10B981), fontWeight = FontWeight.Bold)) {
-                            append(snippet.substring(startIndex, startIndex + lowerQ.length))
+                            append(snippet.substring(startIndex, startIndex + lowerTarget.length))
                         }
-                        append(snippet.substring(startIndex + lowerQ.length))
+                        append(snippet.substring(startIndex + lowerTarget.length))
                     } else {
                         withStyle(style = SpanStyle(color = Color(0xFFE4E4E7))) {
                             append(snippet)

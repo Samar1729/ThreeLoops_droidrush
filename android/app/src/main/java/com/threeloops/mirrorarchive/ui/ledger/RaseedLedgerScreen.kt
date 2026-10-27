@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DemoPhoto
 import com.threeloops.mirrorarchive.data.demo.DemoSeedData
@@ -281,31 +282,33 @@ fun RaseedLedgerScreen(
 
                                     Spacer(modifier = Modifier.width(12.dp))
 
-                                    Column {
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(end = 8.dp)
+                                    ) {
                                         Text(
                                             text = photo.merchant ?: photo.title,
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
-                                            maxLines = 1
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                         Spacer(modifier = Modifier.height(2.dp))
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = photo.dateFormatted,
-                                                fontSize = 11.sp,
-                                                color = Color(0xFFA1A1AA)
-                                            )
-                                            if (photo.gstin != null) {
-                                                Text(text = " • ", fontSize = 11.sp, color = Color(0xFFA1A1AA))
-                                                Text(
-                                                    text = photo.gstin,
-                                                    fontSize = 9.sp,
-                                                    fontFamily = FontFamily.Monospace,
-                                                    color = Color(0xFF10B981)
-                                                )
-                                            }
+                                        val subtitleText = if (photo.gstin != null) {
+                                            "${photo.dateFormatted} • GSTIN: ${photo.gstin}"
+                                        } else {
+                                            photo.dateFormatted
                                         }
+                                        Text(
+                                            text = subtitleText,
+                                            fontSize = 10.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = Color(0xFFA1A1AA),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
                                     }
                                 }
 
@@ -314,7 +317,8 @@ fun RaseedLedgerScreen(
                                     fontSize = 14.sp,
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = Color.White,
+                                    modifier = Modifier.padding(start = 8.dp)
                                 )
                             }
 

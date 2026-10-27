@@ -285,7 +285,7 @@ fun PeopleScreen(
                                     }
                                 }
 
-                                items(clusterGroups.keys.toList()) { clusterId ->
+                                items(clusterGroups.keys.sorted().toList()) { clusterId ->
                                     val count = clusterGroups[clusterId]?.size ?: 0
                                     val isSelected = selectedClusterId == clusterId
                                     val repPhoto = clusterGroups[clusterId]?.firstOrNull()
@@ -311,7 +311,7 @@ fun PeopleScreen(
                                         ) {
                                             if (repPhoto != null) {
                                                 AsyncImage(
-                                                    model = if (repPhoto.drawableRes != 0) repPhoto.drawableRes else repPhoto.imageUrl,
+                                                    model = if (repPhoto.clusterAvatarRes != 0) repPhoto.clusterAvatarRes else (if (repPhoto.drawableRes != 0) repPhoto.drawableRes else repPhoto.imageUrl),
                                                     contentDescription = null,
                                                     contentScale = ContentScale.Crop,
                                                     modifier = Modifier.fillMaxSize().clip(CircleShape)

@@ -38,7 +38,8 @@ data class DisplayPhoto(
     val faceQuality: Float get() = ((eyesOpenProb ?: 0.5f) * 0.5f + (smileProb ?: 0.5f) * 0.5f)
     val burstGroupId: Int? get() = if (category == "BURSTS") 101 else null
     val merchant: String? get() = if (category == "RECEIPTS") title else null
-    val totalDouble: Double? get() = totalAmount?.replace("₹", "")?.replace(",", "")?.trim()?.toDoubleOrNull()
+    val clusterAvatarRes: Int get() = if (personClusterId == 3 || id == 8L) R.drawable.sample_face_person3 else drawableRes
+    val totalDouble: Double? get() = totalAmount?.replace("₹", "")?.replace("Rs.", "")?.replace(",", "")?.trim()?.toDoubleOrNull()
 }
 
 typealias DemoPhoto = DisplayPhoto
@@ -208,7 +209,7 @@ object SampleMediaSeed {
             imageUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=700&q=80",
             drawableRes = R.drawable.sample_portrait_ananya,
             title = "Ananya - Campus Golden Hour",
-            subtitle = "Yesterday • Eyes 98% • Smile 94%",
+            subtitle = "Yesterday • 4 photos",
             tag = "portrait 97%",
             ocrSnippet = null,
             faceBox = RectF(0.28f, 0.18f, 0.72f, 0.68f),
@@ -235,7 +236,7 @@ object SampleMediaSeed {
             imageUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=700&q=80",
             drawableRes = R.drawable.sample_portrait_rohit,
             title = "Rohit - Studio Portrait",
-            subtitle = "3 days ago • Eyes 94% • Smile 88%",
+            subtitle = "3 days ago • Studio Shoot",
             tag = "portrait 94%",
             ocrSnippet = null,
             faceBox = RectF(0.25f, 0.15f, 0.75f, 0.70f),
@@ -262,7 +263,7 @@ object SampleMediaSeed {
             imageUrl = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=700&q=80",
             drawableRes = R.drawable.sample_portrait_team,
             title = "Hackathon Core Team Trio",
-            subtitle = "5 days ago • Eyes 96% • Smile 92%",
+            subtitle = "5 days ago • Hackathon Finals",
             tag = "team 96%",
             ocrSnippet = null,
             faceBox = RectF(0.15f, 0.20f, 0.85f, 0.65f),
@@ -272,7 +273,7 @@ object SampleMediaSeed {
             smileProb = 0.92f,
             eyesOpenProb = 0.96f,
             blurScore = 142.8,
-            personClusterId = 3,
+            personClusterId = 1,
             labels = listOf(
                 LabelResult("people", 0.96f),
                 LabelResult("team", 0.93f),
@@ -291,7 +292,7 @@ object SampleMediaSeed {
             imageUrl = "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=700&q=80",
             drawableRes = R.drawable.sample_portrait_alumni,
             title = "Alumni Reunion Portrait",
-            subtitle = "Last week • Eyes 93% • Smile 89%",
+            subtitle = "Last week • Campus Fest",
             tag = "portrait 95%",
             ocrSnippet = null,
             faceBox = RectF(0.30f, 0.20f, 0.70f, 0.65f),
@@ -301,7 +302,7 @@ object SampleMediaSeed {
             smileProb = 0.89f,
             eyesOpenProb = 0.93f,
             blurScore = 148.0,
-            personClusterId = 1,
+            personClusterId = 3,
             labels = listOf(
                 LabelResult("portrait", 0.95f),
                 LabelResult("person", 0.93f),
@@ -314,104 +315,101 @@ object SampleMediaSeed {
         ),
 
         // =========================================================================
-        // 4 REAL BURST / ACTION SEQUENCES
+        // 4 REAL BURST / ACTION SEQUENCES (SAME SUBJECT SEQUENCE)
         // =========================================================================
         DisplayPhoto(
             id = 9L,
             imageUrl = "https://images.unsplash.com/photo-1519058082700-08a0b56da9b4?w=700&q=80",
             drawableRes = R.drawable.sample_burst_jump_winner,
-            title = "Action Burst #1 (Peak Air)",
-            subtitle = "Today 17:42 • Sharpness 168.4 • Face 0.96",
-            tag = "burst 98%",
+            title = "Action Burst #1 (Best Shot)",
+            subtitle = "Today 17:42 • Sharpness: 94.2 | Face: 0.96",
+            tag = "★ BEST",
             ocrSnippet = null,
             faceBox = RectF(0.42f, 0.18f, 0.58f, 0.38f),
             score = 0.98f,
             category = "BURSTS",
             albumType = AlbumType.PEOPLE,
             smileProb = 0.94f,
-            eyesOpenProb = 0.98f,
-            blurScore = 168.4,
+            eyesOpenProb = 0.96f,
+            blurScore = 94.2,
             isWinner = true,
             rejectionReason = null,
             labels = listOf(
                 LabelResult("action", 0.98f),
-                LabelResult("jumping", 0.96f),
-                LabelResult("athlete", 0.92f)
+                LabelResult("sharp", 0.96f),
+                LabelResult("portrait", 0.95f)
             ),
             faces = listOf(
-                FaceInfo(box = Rect(420, 180, 580, 380), smileProb = 0.94f, eyesOpenProb = 0.98f)
+                FaceInfo(box = Rect(420, 180, 580, 380), smileProb = 0.94f, eyesOpenProb = 0.96f)
             )
         ),
 
         DisplayPhoto(
             id = 10L,
-            imageUrl = "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=700&q=80",
-            drawableRes = R.drawable.sample_burst_surf_blur,
-            title = "Action Burst #2 (Motion Blur)",
-            subtitle = "Today 17:42 • Blur 38.2 • Shutter Drag",
-            tag = "blur 38.2",
+            imageUrl = "https://images.unsplash.com/photo-1519058082700-08a0b56da9b4?w=700&q=80",
+            drawableRes = R.drawable.sample_burst_run_blink,
+            title = "Action Burst #2 (Eyes Closed)",
+            subtitle = "Today 17:42 • Drop • Eyes Closed: 0.12",
+            tag = "blinked",
             ocrSnippet = null,
             faceBox = RectF(0.40f, 0.20f, 0.60f, 0.40f),
-            score = 0.52f,
+            score = 0.42f,
             category = "BURSTS",
             albumType = AlbumType.PEOPLE,
             smileProb = 0.72f,
-            eyesOpenProb = 0.76f,
-            blurScore = 38.2, // Low sharpness
+            eyesOpenProb = 0.12f,
+            blurScore = 90.0,
             isWinner = false,
-            rejectionReason = "Drop • Blur 38.2 (Motion Blur)",
+            rejectionReason = "Drop • Eyes Closed: 0.12",
             labels = listOf(
                 LabelResult("action", 0.91f),
-                LabelResult("blur", 0.88f)
+                LabelResult("blinked", 0.88f)
             )
         ),
 
         DisplayPhoto(
             id = 11L,
-            imageUrl = "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=700&q=80",
-            drawableRes = R.drawable.sample_burst_run_blink,
-            title = "Action Burst #3 (Eyes Blinked)",
-            subtitle = "Today 17:42 • Eyes Open 0.14 • Blinked",
-            tag = "blinked",
+            imageUrl = "https://images.unsplash.com/photo-1519058082700-08a0b56da9b4?w=700&q=80",
+            drawableRes = R.drawable.sample_burst_surf_blur,
+            title = "Action Burst #3 (Motion Blur)",
+            subtitle = "Today 17:42 • Drop • Motion Blur: 38.2",
+            tag = "motion blur",
             ocrSnippet = null,
             faceBox = RectF(0.44f, 0.18f, 0.68f, 0.46f),
-            score = 0.45f,
+            score = 0.38f,
             category = "BURSTS",
             albumType = AlbumType.PEOPLE,
-            smileProb = 0.85f,
-            eyesOpenProb = 0.14f, // Eyes closed
-            blurScore = 145.0,
+            smileProb = 0.65f,
+            eyesOpenProb = 0.70f,
+            blurScore = 38.2,
             isWinner = false,
-            rejectionReason = "Drop • Eyes Open 0.14 (Blinked)",
+            rejectionReason = "Drop • Motion Blur: 38.2",
             labels = listOf(
-                LabelResult("runner", 0.90f),
-                LabelResult("person", 0.87f)
-            ),
-            faces = listOf(
-                FaceInfo(box = Rect(440, 180, 680, 460), smileProb = 0.85f, eyesOpenProb = 0.14f)
+                LabelResult("action", 0.89f),
+                LabelResult("motion blur", 0.88f)
             )
         ),
 
         DisplayPhoto(
             id = 12L,
-            imageUrl = "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=700&q=80",
+            imageUrl = "https://images.unsplash.com/photo-1519058082700-08a0b56da9b4?w=700&q=80",
             drawableRes = R.drawable.sample_burst_action_angle,
-            title = "Action Burst #4 (Awkward Angle)",
-            subtitle = "Today 17:42 • Sub-optimal Posture",
-            tag = "sub-optimal",
+            title = "Action Burst #4 (Frame Jitter)",
+            subtitle = "Today 17:42 • Drop • Frame Jitter: 0.44",
+            tag = "jitter",
             ocrSnippet = null,
             faceBox = RectF(0.46f, 0.22f, 0.69f, 0.49f),
-            score = 0.58f,
+            score = 0.44f,
             category = "BURSTS",
             albumType = AlbumType.PEOPLE,
             smileProb = 0.60f,
             eyesOpenProb = 0.75f,
             blurScore = 52.0,
             isWinner = false,
-            rejectionReason = "Drop • Sub-optimal Angle",
+            rejectionReason = "Drop • Frame Jitter: 0.44",
             labels = listOf(
-                LabelResult("outdoor", 0.86f),
-                LabelResult("running", 0.84f)
+                LabelResult("action", 0.86f),
+                LabelResult("jitter", 0.84f)
             )
         ),
 
@@ -562,24 +560,47 @@ object SampleMediaSeed {
         if (q.isEmpty() || q == "all") {
             return if (modeIsText) photos.filter { it.rawOcrText != null } else photos
         }
+        val cleanQ = when (q) {
+            "receipts" -> "receipt"
+            "invoices" -> "invoice"
+            "portraits" -> "portrait"
+            "documents" -> "document"
+            "screenshots" -> "screenshot"
+            else -> q
+        }
+
+        if (cleanQ == "receipt") {
+            return receiptPhotos
+        }
+        if (cleanQ == "portrait" && !modeIsText) {
+            return peoplePhotos
+        }
+        if (cleanQ == "document") {
+            return documentPhotos
+        }
+
         return if (modeIsText) {
             photos.filter { photo ->
                 photo.rawOcrText != null && (
-                    photo.rawOcrText.lowercase().contains(q) ||
-                    (q == "receipt" && photo.category == "RECEIPTS") ||
-                    (q == "invoice" && photo.category == "RECEIPTS") ||
-                    (q == "document" && (photo.category == "DOCUMENTS" || photo.category == "SCREENSHOTS")) ||
-                    (q == "screenshot" && photo.category == "SCREENSHOTS") ||
-                    photo.title.lowercase().contains(q) ||
-                    photo.tag.lowercase().contains(q)
+                    photo.rawOcrText.lowercase().contains(cleanQ) ||
+                    (cleanQ == "invoice" && (photo.category == "RECEIPTS" || photo.rawOcrText.lowercase().contains("invoice"))) ||
+                    (cleanQ == "coffee" && (photo.title.lowercase().contains("coffee") || photo.rawOcrText.lowercase().contains("coffee") || photo.rawOcrText.lowercase().contains("starbucks"))) ||
+                    (cleanQ == "fuel" && (photo.title.lowercase().contains("fuel") || photo.rawOcrText.lowercase().contains("fuel") || photo.rawOcrText.lowercase().contains("shell"))) ||
+                    (cleanQ == "screenshot" && photo.category == "SCREENSHOTS") ||
+                    photo.title.lowercase().contains(cleanQ) ||
+                    photo.tag.lowercase().contains(cleanQ)
                 )
             }
         } else {
             photos.filter { photo ->
-                photo.title.lowercase().contains(q) ||
-                    photo.tag.lowercase().contains(q) ||
-                    photo.category.lowercase().contains(q) ||
-                    photo.labels.any { it.text.lowercase().contains(q) }
+                photo.title.lowercase().contains(cleanQ) ||
+                    photo.tag.lowercase().contains(cleanQ) ||
+                    photo.category.lowercase().contains(cleanQ) ||
+                    photo.labels.any { it.text.lowercase().contains(cleanQ) } ||
+                    (cleanQ == "coffee" && photo.title.lowercase().contains("coffee")) ||
+                    (cleanQ == "fuel" && photo.title.lowercase().contains("fuel")) ||
+                    (cleanQ == "portrait" && photo.category == "PEOPLE") ||
+                    (cleanQ == "people" && photo.category == "PEOPLE")
             }
         }
     }

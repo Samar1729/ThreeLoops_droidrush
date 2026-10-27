@@ -203,7 +203,7 @@ fun DuplicatesScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = "Action Burst Sequence (4 shots)",
+                                        text = "Action Burst Sequence (${displayedBurstItems.size} shots)",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
@@ -324,7 +324,7 @@ private fun BurstPhotoItemCard(
                             color = Color(0xFF10B981)
                         )
                         Text(
-                            text = "Sharpness 168 | Face 0.96",
+                            text = "Sharpness: 94.2 | Face: 0.96",
                             fontSize = 9.sp,
                             fontFamily = FontFamily.Monospace,
                             color = Color(0xFFD1FAE5)
