@@ -42,6 +42,8 @@ import com.threeloops.mirrorarchive.ui.theme.TextSecondary
 import com.threeloops.mirrorarchive.ui.theme.glass
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 enum class PeopleTab {
     CLUSTERS,
     BURST_ARENA
@@ -63,9 +65,9 @@ fun PeopleScreen(
         DemoSeedData.getClusterGroups(cosineThreshold)
     }
 
-    val peoplePhotos = remember { DemoSeedData.peoplePhotos }
+    val peoplePhotos by viewModel.portraitPhotos.collectAsStateWithLifecycle()
 
-    val displayedPhotos = remember(selectedClusterId, clusterGroups) {
+    val displayedPhotos = remember(selectedClusterId, clusterGroups, peoplePhotos) {
         if (selectedClusterId == null) {
             peoplePhotos
         } else {

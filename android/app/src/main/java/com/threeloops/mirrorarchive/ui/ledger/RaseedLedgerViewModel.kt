@@ -47,8 +47,32 @@ class RaseedLedgerViewModel @Inject constructor(
                 withContext(Dispatchers.IO) {
                     val raseedList = mutableListOf<RaseedItem>()
 
-                    if (items.isNotEmpty()) {
-                        for (item in items) {
+                    val receiptItems = if (items.isNotEmpty()) items else {
+                        val all = database.imageDao().imagesByIds(database.imageDao().allMediaIds())
+                        all.filter { img ->
+                            img.displayName.contains("receipt", ignoreCase = true) ||
+                            img.displayName.contains("bill", ignoreCase = true) ||
+                            img.displayName.contains("starbucks", ignoreCase = true) ||
+                            img.displayName.contains("shell", ignoreCase = true) ||
+                            img.displayName.contains("pharmacy", ignoreCase = true) ||
+                            img.displayName.contains("grocery", ignoreCase = true) ||
+                            (!img.ocrText.isNullOrBlank() && (img.ocrText.contains("total", true) || img.ocrText.contains("gst", true)))
+                        }.map { com.threeloops.mirrorarchive.contracts.ImageItem(
+                            id = it.id,
+                            mediaId = it.mediaId,
+                            uri = it.uri,
+                            dateAdded = it.dateAdded,
+                            dateTaken = it.dateTaken,
+                            sizeBytes = it.sizeBytes,
+                            width = it.width,
+                            height = it.height,
+                            blurScore = it.blurScore,
+                            faceCount = it.faceCount
+                        ) }
+                    }
+
+                    if (receiptItems.isNotEmpty()) {
+                        for (item in receiptItems) {
                             val entity = database.imageDao().imagesByIds(listOf(item.id)).firstOrNull()
                             val ocrText = entity?.ocrText
                             raseedList.add(RaseedParser.parse(item.id, item.uri, ocrText))

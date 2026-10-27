@@ -63,19 +63,7 @@ fun SearchScreen(
         listOf("all", "receipt", "invoice", "coffee", "fuel", "portraits", "documents")
     }
 
-    // Filter demo photos deterministically
-    val matchedPhotos = remember(query, mode, activeChip) {
-        val effectiveQuery = if (query.isNotEmpty()) query else if (activeChip != "all") activeChip else ""
-        if (effectiveQuery.isEmpty()) {
-            if (mode == SearchMode.TEXT) {
-                DemoSeedData.photos.filter { it.ocrText != null }
-            } else {
-                DemoSeedData.photos
-            }
-        } else {
-            DemoSeedData.filterByQuery(effectiveQuery, modeIsText = (mode == SearchMode.TEXT))
-        }
-    }
+    val matchedPhotos by viewModel.searchPhotos.collectAsStateWithLifecycle()
 
     AmbientMeshBox {
         Column(
@@ -274,7 +262,7 @@ fun SearchScreen(
                             )
                             .clickable {
                                 activeChip = chip
-                                viewModel.query.value = ""
+                                viewModel.query.value = if (chip == "all") "" else chip
                             }
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {

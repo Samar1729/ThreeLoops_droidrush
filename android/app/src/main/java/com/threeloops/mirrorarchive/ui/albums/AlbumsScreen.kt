@@ -43,15 +43,13 @@ fun AlbumsScreen(
     modifier: Modifier = Modifier
 ) {
     var showNitiSandbox by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("All") }
+    val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val displayedPhotos by viewModel.displayedPhotos.collectAsState()
+    val scanState by viewModel.scanState.collectAsState()
     var inspectingPhoto by remember { mutableStateOf<DisplayPhoto?>(null) }
 
     val filterPills = remember {
         listOf("All", "Receipts", "Portraits", "Screenshots", "Documents")
-    }
-
-    val displayedPhotos = remember(selectedFilter) {
-        SampleMediaSeed.filterByCategory(selectedFilter)
     }
 
     Box(
@@ -94,7 +92,7 @@ fun AlbumsScreen(
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            text = "1,248 indexed • 42 img/s • offline",
+                            text = "${displayedPhotos.size} indexed • 42 img/s • offline",
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace,
                             color = Color(0xFFA1A1AA)
@@ -142,7 +140,7 @@ fun AlbumsScreen(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
                             ) {
-                                selectedFilter = pill
+                                viewModel.selectedFilter.value = pill
                             }
                             .padding(horizontal = 14.dp, vertical = 7.dp)
                     ) {

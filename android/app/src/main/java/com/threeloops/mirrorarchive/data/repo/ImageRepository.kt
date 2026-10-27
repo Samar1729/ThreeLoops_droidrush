@@ -29,6 +29,11 @@ interface ImageRepository {
     fun album(type: AlbumType): Flow<List<ImageItem>>
 
     /**
+     * Observes all images indexed in the repository.
+     */
+    fun allImages(): Flow<List<ImageItem>>
+
+    /**
      * Returns candidate hash rows for duplicate clustering.
      */
     fun duplicateCandidates(): List<HashRow>

@@ -60,7 +60,7 @@ class ScanController @Inject constructor(
 
         workManager.enqueueUniqueWork(
             uniqueName,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.REPLACE,
             requestBuilder.build()
         )
     }

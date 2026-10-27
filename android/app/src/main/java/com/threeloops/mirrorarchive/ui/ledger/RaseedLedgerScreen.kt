@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DemoPhoto
 import com.threeloops.mirrorarchive.data.demo.DemoSeedData
+import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
 import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
 import com.threeloops.mirrorarchive.ui.theme.glass
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
@@ -51,6 +52,29 @@ fun RaseedLedgerScreen(
     var inspectingPhoto by remember { mutableStateOf<DemoPhoto?>(null) }
 
     val receiptDemoPhotos = remember { DemoSeedData.receiptPhotos }
+    val displayReceipts = remember(summary.items) {
+        if (summary.items.isNotEmpty()) {
+            summary.items.map { item ->
+                DisplayPhoto(
+                    id = item.id,
+                    imageUrl = item.imageUri,
+                    drawableRes = 0,
+                    title = item.merchant,
+                    subtitle = "${item.date} • ${item.category}",
+                    tag = "receipt 96%",
+                    ocrSnippet = item.rawSnippet,
+                    faceBox = null,
+                    score = 0.96f,
+                    category = "RECEIPTS",
+                    gstin = item.gstin,
+                    totalAmount = String.format(java.util.Locale.US, "₹%.2f", item.totalAmount),
+                    rawOcrText = item.rawSnippet
+                )
+            }
+        } else {
+            receiptDemoPhotos
+        }
+    }
 
     AmbientMeshBox(modifier = modifier) {
         Column(
@@ -233,7 +257,7 @@ fun RaseedLedgerScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 110.dp)
             ) {
-                items(receiptDemoPhotos, key = { it.id }) { photo ->
+                items(displayReceipts, key = { it.id }) { photo ->
                     val isExpanded = expandedReceiptId == photo.id
 
                     Box(

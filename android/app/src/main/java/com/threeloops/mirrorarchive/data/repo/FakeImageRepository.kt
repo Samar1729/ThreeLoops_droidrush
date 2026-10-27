@@ -541,6 +541,8 @@ class FakeImageRepository @Inject constructor() : ImageRepository {
         }
     }
 
+    override fun allImages(): Flow<List<ImageItem>> = _itemsFlow.asStateFlow()
+
     override fun duplicateCandidates(): List<HashRow> {
         return _itemsFlow.value.map {
             HashRow(

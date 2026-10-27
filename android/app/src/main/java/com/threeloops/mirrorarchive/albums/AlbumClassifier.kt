@@ -66,13 +66,20 @@ object AlbumClassifier {
             ocrTokens.contains(token) || safeOcr.contains(token)
         }
         val isTextContent = isTextLike(labels) || safeOcr.isNotEmpty()
-        val isReceipt = (isTextContent && matchedFinancialTokens.size >= 2) || labelTexts.contains("receipt")
+        val isReceipt = (isTextContent && matchedFinancialTokens.size >= 2) ||
+            labelTexts.contains("receipt") ||
+            lowerPath.contains("receipt") ||
+            lowerPath.contains("bill")
         if (isReceipt) {
             result.add(AlbumType.RECEIPTS)
         }
 
         // 3. DOCUMENTS: isTextLike AND ocr length > 80 AND NOT receipts
-        val isDocument = isTextContent && safeOcr.length > 80 && !isReceipt
+        val isDocument = (isTextContent && safeOcr.length > 80 && !isReceipt) ||
+            lowerPath.contains("doc") ||
+            lowerPath.contains("notes") ||
+            lowerPath.contains("journal") ||
+            lowerPath.contains("schedule")
         if (isDocument) {
             result.add(AlbumType.DOCUMENTS)
         }

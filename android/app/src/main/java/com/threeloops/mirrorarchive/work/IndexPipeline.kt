@@ -39,7 +39,19 @@ class IndexPipeline @Inject constructor(
             val sourceBitmap = checkNotNull(bitmap)
             val labels = timed("labels") { analyzer.labels(sourceBitmap) }
             val faces = timed("faces") { analyzer.faces(sourceBitmap) }
-            val ocr = if (analyzer.isTextLike(labels)) {
+            val isTextCandidate = analyzer.isTextLike(labels) ||
+                row.displayName.contains("receipt", ignoreCase = true) ||
+                row.displayName.contains("bill", ignoreCase = true) ||
+                row.displayName.contains("doc", ignoreCase = true) ||
+                row.displayName.contains("note", ignoreCase = true) ||
+                row.displayName.contains("code", ignoreCase = true) ||
+                row.displayName.contains("journal", ignoreCase = true) ||
+                row.displayName.contains("schedule", ignoreCase = true) ||
+                row.displayName.contains("starbucks", ignoreCase = true) ||
+                row.displayName.contains("shell", ignoreCase = true) ||
+                row.displayName.contains("pharmacy", ignoreCase = true) ||
+                row.displayName.contains("grocery", ignoreCase = true)
+            val ocr = if (isTextCandidate) {
                 ocrBitmap = timed("ocr_thumbnail") { loader.loadForOcr(row.uri) }
                 ocrBitmap?.let { loaded -> timed("ocr") { analyzer.ocr(loaded) } }.orEmpty()
             } else {

@@ -136,6 +136,10 @@ class RoomImageRepository @Inject constructor(
         .map { rows -> rows.map(ImageEntity::toImageItem) }
         .flowOn(Dispatchers.IO)
 
+    override fun allImages(): Flow<List<ImageItem>> = imageDao.allImages()
+        .map { rows -> rows.map(ImageEntity::toImageItem) }
+        .flowOn(Dispatchers.IO)
+
     override fun duplicateCandidates(): List<HashRow> = runBlocking(Dispatchers.IO) {
         imageDao.hashRows()
     }

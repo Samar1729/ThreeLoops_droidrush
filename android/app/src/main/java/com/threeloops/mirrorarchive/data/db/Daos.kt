@@ -148,6 +148,12 @@ abstract class ImageDao {
     @Query("SELECT * FROM images WHERE id IN (:ids)")
     abstract suspend fun imagesByIds(ids: List<Long>): List<ImageEntity>
 
+    @Query("SELECT * FROM images WHERE id = :id LIMIT 1")
+    abstract suspend fun imageById(id: Long): ImageEntity?
+
+    @Query("SELECT * FROM images ORDER BY dateAdded DESC")
+    abstract fun allImages(): Flow<List<ImageEntity>>
+
     @Query("DELETE FROM images WHERE mediaId IN (:ids)")
     abstract suspend fun deleteByMediaIds(ids: List<Long>)
 
@@ -167,6 +173,12 @@ interface LabelDao {
 
     @Query("SELECT DISTINCT label FROM labels WHERE label LIKE :prefix || '%' ORDER BY label ASC LIMIT 8")
     fun suggestions(prefix: String): Flow<List<String>>
+
+    @Query("SELECT * FROM labels WHERE imageId = :imageId ORDER BY confidence DESC")
+    suspend fun labelsFor(imageId: Long): List<LabelEntity>
+
+    @Query("SELECT * FROM labels WHERE imageId IN (:imageIds) ORDER BY confidence DESC")
+    suspend fun labelsForImages(imageIds: List<Long>): List<LabelEntity>
 }
 
 @Dao
@@ -204,6 +216,9 @@ interface FaceDao {
 
     @Query("SELECT * FROM faces WHERE imageId = :imageId ORDER BY id ASC")
     suspend fun facesFor(imageId: Long): List<FaceEntity>
+
+    @Query("SELECT * FROM faces WHERE imageId IN (:imageIds) ORDER BY id ASC")
+    suspend fun facesForImages(imageIds: List<Long>): List<FaceEntity>
 }
 
 @Dao

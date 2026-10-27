@@ -33,19 +33,23 @@ import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
 import com.threeloops.mirrorarchive.data.demo.SampleMediaSeed
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
 
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.threeloops.mirrorarchive.dupes.DuplicatesViewModel
+
 @Composable
 fun DuplicatesScreen(
     onBackClick: () -> Unit,
     onImageClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: DuplicatesViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var isPurged by remember { mutableStateOf(false) }
     var reclaimableMb by remember { mutableStateOf("13.2 MB") }
     var inspectingPhoto by remember { mutableStateOf<DisplayPhoto?>(null) }
 
-    val burstItems = remember { SampleMediaSeed.burstPhotos }
-    val displayedBurstItems = remember(isPurged) {
+    val burstItems by viewModel.burstPhotos.collectAsState()
+    val displayedBurstItems = remember(burstItems, isPurged) {
         if (isPurged) burstItems.filter { it.isWinner } else burstItems
     }
 
@@ -135,6 +139,7 @@ fun DuplicatesScreen(
                             if (!isPurged) {
                                 Button(
                                     onClick = {
+                                        viewModel.purgeRedundant()
                                         isPurged = true
                                         reclaimableMb = "0.0 MB"
                                         Toast.makeText(
