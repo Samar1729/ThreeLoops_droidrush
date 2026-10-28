@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,11 +20,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.fragment.app.FragmentActivity
@@ -59,6 +63,7 @@ import com.threeloops.mirrorarchive.ui.search.SearchScreen
 import com.threeloops.mirrorarchive.ui.settings.SettingsScreen
 import com.threeloops.mirrorarchive.ui.storage.StorageSaverScreen
 import com.threeloops.mirrorarchive.ui.theme.MirrorArchiveTheme
+import com.threeloops.mirrorarchive.security.DatabaseRecoveryNotifier
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -91,8 +96,19 @@ fun MainNavigationApp(
     val navState by viewModel.navigationState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val recoveryEvent by DatabaseRecoveryNotifier.events.collectAsStateWithLifecycle()
 
     var isVaultUnlocked by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(recoveryEvent, navState, isVaultUnlocked) {
+        if (isVaultUnlocked && navState == AppNavigationState.Ready &&
+            DatabaseRecoveryNotifier.consumePendingNotice(context)
+        ) {
+            snackbarHostState.showSnackbar("Index was reset, re-scanning")
+        }
+    }
 
     if (!isVaultUnlocked) {
         AuthScreen(
@@ -162,6 +178,7 @@ fun MainNavigationApp(
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Black,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (!isGateScreen) {
                 Column {
@@ -424,7 +441,7 @@ private fun ScanProgressBanner(progress: ScanProgress) {
         ScanPhase.PAUSED -> "Indexing paused · ${progress.done} / ${progress.total}"
         ScanPhase.FAILED -> "Indexing failed · ${progress.done} / ${progress.total}"
         ScanPhase.COMPLETE -> "Indexing complete · ${progress.done} / ${progress.total}"
-        ScanPhase.SYNCING -> "Updating photo library · ${progress.done} / ${progress.total}"
+        ScanPhase.SYNCING -> "Syncing new photos..."
     }
     Surface(color = Color(0xFF18181B), modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {

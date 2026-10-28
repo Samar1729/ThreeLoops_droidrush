@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.threeloops.mirrorarchive.BuildConfig
 import com.threeloops.mirrorarchive.contracts.ScanPhase
 import com.threeloops.mirrorarchive.settings.Settings
 import java.util.Locale
@@ -81,9 +82,15 @@ fun SettingsScreen(
                 AboutSection(
                     current.appInfo.versionName,
                     current.networkPermission,
+                    current.databaseEncrypted,
                     current.appInfo.libraries,
                     current.appInfo.privacyStatement
                 )
+                if (BuildConfig.DEBUG) {
+                    OutlinedButton(onClick = viewModel::simulateKeyLoss, modifier = Modifier.fillMaxWidth()) {
+                        Text("Simulate key loss")
+                    }
+                }
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -159,11 +166,20 @@ private fun IndexSection(
 }
 
 @Composable
-private fun AboutSection(versionName: String, networkPermission: String, libraries: List<String>, privacy: String) {
+private fun AboutSection(
+    versionName: String,
+    networkPermission: String,
+    databaseEncrypted: Boolean,
+    libraries: List<String>,
+    privacy: String
+) {
     SectionCard("Privacy / About") {
         InfoRow("Version", versionName)
         InfoRow("Network permission", networkPermission)
-        InfoRow("Database encrypted", "Pending")
+        InfoRow(
+            "Database encrypted",
+            if (databaseEncrypted) "yes (SQLCipher, Keystore-wrapped key)" else "no"
+        )
         Text("Libraries and disclosures", color = Color.White)
         libraries.forEach { Text("• $it", color = Color.LightGray, style = MaterialTheme.typography.bodySmall) }
         Text(privacy, color = Color.LightGray, style = MaterialTheme.typography.bodyMedium)

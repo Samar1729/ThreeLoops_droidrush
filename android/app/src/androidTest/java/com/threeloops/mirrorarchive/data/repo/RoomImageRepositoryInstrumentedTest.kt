@@ -1,13 +1,13 @@
 package com.threeloops.mirrorarchive.data.repo
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.contracts.IndexedImage
 import com.threeloops.mirrorarchive.contracts.LabelResult
 import com.threeloops.mirrorarchive.data.db.AppDatabase
+import com.threeloops.mirrorarchive.di.DatabaseModule
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.collect
@@ -33,9 +33,7 @@ class RoomImageRepositoryInstrumentedTest {
     @Before
     fun setUp() {
         databaseName = "room-repository-test-${UUID.randomUUID()}.db"
-        database = Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
-            .fallbackToDestructiveMigration()
-            .build()
+        database = DatabaseModule.build(context, databaseName)
         repository = RoomImageRepository(database)
     }
 

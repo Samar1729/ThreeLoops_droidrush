@@ -5,6 +5,7 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.threeloops.mirrorarchive.contracts.ScanPhase
@@ -65,15 +66,30 @@ class ScanController @Inject constructor(
         )
     }
 
+    /** Enqueue an unconstrained incremental update without replacing existing work. */
+    fun startIncremental() {
+        val request = OneTimeWorkRequestBuilder<IncrementalSyncWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+        workManager.enqueueUniqueWork(WORK_INCREMENTAL, ExistingWorkPolicy.KEEP, request)
+    }
+
     /** Live progress from both unique work names, backed by the persisted scan checkpoint. */
     fun progress(): Flow<ScanProgress> = combine(
         workManager.getWorkInfosForUniqueWorkFlow(WORK_FULL),
         workManager.getWorkInfosForUniqueWorkFlow(WORK_NOW),
+        workManager.getWorkInfosForUniqueWorkFlow(WORK_INCREMENTAL),
         scanStateDao.observe()
-    ) { fullWork, immediateWork, checkpoint ->
+    ) { fullWork, immediateWork, incrementalWork, checkpoint ->
         val workInfo = selectWorkInfo(fullWork + immediateWork)
-        if (workInfo == null) progressFromCheckpoint(checkpoint)
-        else progressFromWork(workInfo, checkpoint)
+        if (workInfo != null) progressFromWork(workInfo, checkpoint)
+        else incrementalWork.firstOrNull {
+            it.state == WorkInfo.State.RUNNING ||
+                it.state == WorkInfo.State.ENQUEUED ||
+                it.state == WorkInfo.State.BLOCKED
+        }
+            ?.let { progressFromWork(it, checkpoint, incremental = true) }
+            ?: progressFromCheckpoint(checkpoint)
     }.flowOn(Dispatchers.IO)
 
     /** Cancel both unique scan names without changing the persisted checkpoint. */
@@ -105,7 +121,11 @@ class ScanController @Inject constructor(
         }
     }
 
-    private fun progressFromWork(work: WorkInfo, checkpoint: ScanStateEntity?): ScanProgress {
+    private fun progressFromWork(
+        work: WorkInfo,
+        checkpoint: ScanStateEntity?,
+        incremental: Boolean = false
+    ): ScanProgress {
         val fallbackDone = checkpoint?.processedCount ?: 0L
         val fallbackTotal = checkpoint?.totalCount ?: 0L
         val done = work.progress.getInt(KEY_DONE, fallbackDone.toIntSaturated())
@@ -114,10 +134,14 @@ class ScanController @Inject constructor(
             ?.let { phase -> runCatching { ScanPhase.valueOf(phase) }.getOrNull() }
 
         val phase = when (work.state) {
-            WorkInfo.State.ENQUEUED ->
-                if (work.runAttemptCount > 0) ScanPhase.PAUSED else ScanPhase.QUEUED
-            WorkInfo.State.RUNNING -> workerPhase ?: ScanPhase.SCANNING
-            WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED -> ScanPhase.PAUSED
+            WorkInfo.State.ENQUEUED -> when {
+                incremental -> ScanPhase.SYNCING
+                work.runAttemptCount > 0 -> ScanPhase.PAUSED
+                else -> ScanPhase.QUEUED
+            }
+            WorkInfo.State.RUNNING -> if (incremental) ScanPhase.SYNCING else workerPhase ?: ScanPhase.SCANNING
+            WorkInfo.State.BLOCKED -> if (incremental) ScanPhase.SYNCING else ScanPhase.PAUSED
+            WorkInfo.State.CANCELLED -> ScanPhase.PAUSED
             WorkInfo.State.SUCCEEDED -> ScanPhase.COMPLETE
             WorkInfo.State.FAILED -> ScanPhase.FAILED
         }

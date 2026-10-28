@@ -14,6 +14,7 @@ import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import com.threeloops.mirrorarchive.data.mediastore.MediaStoreDataSource
 import com.threeloops.mirrorarchive.data.mediastore.BitmapLoader
 import com.threeloops.mirrorarchive.work.ScanController
+import com.threeloops.mirrorarchive.work.SyncUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,7 @@ class AlbumsViewModel @Inject constructor(
     private val mediaStore: MediaStoreDataSource,
     private val bitmapLoader: BitmapLoader,
     private val scanController: ScanController,
+    private val syncUseCase: SyncUseCase,
     private val database: AppDatabase
 ) : ViewModel() {
 
@@ -63,8 +65,6 @@ class AlbumsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             _devicePhotoCount.value = mediaStore.count()
-            // Automatically kick off local on-device ML indexing
-            scanController.start(ignoreConstraints = true)
         }
     }
 
@@ -110,6 +110,8 @@ class AlbumsViewModel @Inject constructor(
     }
 
     fun startScanNow() = scanController.start(ignoreConstraints = true)
+
+    fun syncNewPhotos() = syncUseCase.triggerNow()
 
     fun cancelScan() = scanController.cancel()
 

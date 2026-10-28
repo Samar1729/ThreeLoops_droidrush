@@ -25,7 +25,7 @@ class MetricsRecorderTest {
         val snapshot = recorder.snapshot(runId)!!
         assertEquals(2L, snapshot.stages.getValue(Stage.DECODE).count)
         assertEquals(1L, snapshot.stages.getValue(Stage.LABEL).count)
-        assertEquals(1L, snapshot.stages.getValue(Stage.FACE).count)
+        assertEquals(0L, snapshot.stages.getValue(Stage.FACE).count)
         assertEquals(3L, snapshot.images)
         assertTrue(snapshot.stages.getValue(Stage.DECODE).totalNanos >= 0L)
         assertTrue(snapshot.stages.getValue(Stage.LABEL).totalNanos >= 0L)

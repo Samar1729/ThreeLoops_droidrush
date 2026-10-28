@@ -19,14 +19,16 @@ interface MediaStoreSource {
     suspend fun query(afterId: Long, limit: Int = 50): List<MediaRow>
     suspend fun count(): Int
     fun currentGeneration(): Long
+    suspend fun changedSince(generation: Long): List<MediaRow> = emptyList()
+    suspend fun allIds(): LongArray = longArrayOf()
 }
 
 /**
  * Data source for querying images from the Android MediaStore.
  *
  * This is the ONLY class in the application allowed to communicate with MediaStore directly.
- * All MediaStore queries run on [Dispatchers.IO] and gracefully handle [SecurityException]
- * without crashing.
+ * All MediaStore queries run on [Dispatchers.IO]. Indexing queries propagate failures so a worker
+ * can distinguish a failed query from a successfully exhausted gallery.
  *
  * @param context Application context used to obtain the [ContentResolver].
  */
@@ -63,7 +65,7 @@ class MediaStoreDataSource @Inject constructor(
      *
      * @param afterId MediaStore row ID checkpoint; only rows with `_id > afterId` are returned.
      * @param limit Maximum number of records to return (defaults to 50).
-     * @return List of matching [MediaRow] items, or empty list on denial/exception.
+     * @return List of matching [MediaRow] items. Query failures are propagated to the worker.
      */
     override suspend fun query(afterId: Long, limit: Int): List<MediaRow> = withContext(Dispatchers.IO) {
         val queryArgs = Bundle().apply {
@@ -121,13 +123,13 @@ class MediaStoreDataSource @Inject constructor(
                     )
                 }
                 results
-            } ?: emptyList()
+            } ?: throw IllegalStateException("MediaStore returned no cursor for image rows")
         } catch (e: SecurityException) {
             Log.w(TAG, "SecurityException while querying MediaStore: ${e.message}")
-            emptyList()
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error querying MediaStore", e)
-            emptyList()
+            throw e
         }
     }
 
@@ -156,7 +158,7 @@ class MediaStoreDataSource @Inject constructor(
     }
 
     /** Rows whose MediaStore generation changed after [generation]. */
-    suspend fun changedSince(generation: Long): List<MediaRow> = withContext(Dispatchers.IO) {
+    override suspend fun changedSince(generation: Long): List<MediaRow> = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -195,18 +197,18 @@ class MediaStoreDataSource @Inject constructor(
                         )
                     }
                 }
-            } ?: emptyList()
+            } ?: throw IllegalStateException("MediaStore returned no cursor for changed rows")
         } catch (e: SecurityException) {
             Log.w(TAG, "SecurityException while querying changed MediaStore items: ${e.message}")
-            emptyList()
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error querying changed MediaStore items", e)
-            emptyList()
+            throw e
         }
     }
 
     /** All image row IDs in ascending MediaStore order. */
-    suspend fun allIds(): LongArray = withContext(Dispatchers.IO) {
+    override suspend fun allIds(): LongArray = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -217,10 +219,10 @@ class MediaStoreDataSource @Inject constructor(
                     var index = 0
                     while (cursor.moveToNext()) ids[index++] = cursor.getLong(0)
                 }
-            } ?: longArrayOf()
+            } ?: throw IllegalStateException("MediaStore returned no cursor for all IDs")
         } catch (e: Exception) {
             Log.e(TAG, "Unable to query MediaStore IDs", e)
-            longArrayOf()
+            throw e
         }
     }
 
