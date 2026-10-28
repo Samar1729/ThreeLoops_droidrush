@@ -1,264 +1,179 @@
 package com.threeloops.mirrorarchive.ui.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.threeloops.mirrorarchive.ui.theme.GlassCard
-import com.threeloops.mirrorarchive.ui.theme.GlassScaffoldBackground
-import com.threeloops.mirrorarchive.ui.theme.TextMuted
-import com.threeloops.mirrorarchive.ui.theme.TextPrimary
-import com.threeloops.mirrorarchive.ui.theme.TextSecondary
-import com.threeloops.mirrorarchive.ui.theme.glass
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.threeloops.mirrorarchive.contracts.ScanPhase
+import com.threeloops.mirrorarchive.settings.Settings
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
-    onNavigateMetrics: () -> Unit,
-    onLockVault: () -> Unit = {},
+    viewModel: SettingsViewModel,
     modifier: Modifier = Modifier
 ) {
-    GlassScaffoldBackground {
-        Column(
-            modifier = modifier.fillMaxSize()
-        ) {
-            // Top Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .glass(
-                            shape = CircleShape,
-                            backgroundColor = Color.White.copy(alpha = 0.08f),
-                            topBorderAlpha = 0.35f
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = "Back",
-                        tint = TextPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var showClearConfirmation by remember { mutableStateOf(false) }
 
-                Spacer(modifier = Modifier.width(14.dp))
-
-                Text(
-                    text = "Settings",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
+    Column(
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                // Privacy Verification Glass Card
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    backgroundColor = Color.White.copy(alpha = 0.05f),
-                    topBorderAlpha = 0.25f
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .glass(
-                                        shape = RoundedCornerShape(10.dp),
-                                        backgroundColor = Color.White.copy(alpha = 0.08f),
-                                        topBorderAlpha = 0.30f
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Shield,
-                                    contentDescription = null,
-                                    tint = TextPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "Privacy & Verification",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Network Permission: None (0 INTERNET)",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Encrypted local SQLite with SQLCipher (AES-256). Every model and index runs 100% on-device.",
-                            fontSize = 12.sp,
-                            color = TextSecondary,
-                            modifier = Modifier.padding(top = 4.dp),
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-
-                // Security & Passcode Vault Glass Card
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    backgroundColor = Color.White.copy(alpha = 0.05f),
-                    topBorderAlpha = 0.25f
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .glass(
-                                        shape = RoundedCornerShape(10.dp),
-                                        backgroundColor = Color.White.copy(alpha = 0.08f),
-                                        topBorderAlpha = 0.30f
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Lock,
-                                    contentDescription = null,
-                                    tint = TextPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "Vault Authentication",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Hardware Biometrics: BiometricPrompt Active",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Passcode Fallback: 6-digit numeric PIN",
-                            fontSize = 12.sp,
-                            color = TextSecondary,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Lock Vault Action Glass Pill
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .glass(
-                                    shape = RoundedCornerShape(12.dp),
-                                    backgroundColor = Color.White.copy(alpha = 0.08f),
-                                    topBorderAlpha = 0.30f
-                                )
-                                .clickable { onLockVault() }
-                                .padding(vertical = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Lock Vault Now",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextPrimary
-                            )
-                        }
-                    }
-                }
-
-                // Storage Glass Card
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    backgroundColor = Color.White.copy(alpha = 0.05f),
-                    topBorderAlpha = 0.25f
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Text(
-                            text = "Index Database",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "Total Indexed", fontSize = 13.sp, color = TextSecondary)
-                            Text(text = "26 Photos", fontSize = 13.sp, color = TextPrimary, fontWeight = FontWeight.Medium)
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = "Database Size", fontSize = 13.sp, color = TextSecondary)
-                            Text(text = "4.2 MB", fontSize = 13.sp, color = TextPrimary, fontWeight = FontWeight.Medium)
-                        }
-                    }
-                }
-
-                // Performance Benchmarks Glass Pill
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .glass(
-                            shape = RoundedCornerShape(14.dp),
-                            backgroundColor = Color.White.copy(alpha = 0.07f),
-                            topBorderAlpha = 0.25f
-                        )
-                        .clickable { onNavigateMetrics() }
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "View Performance Benchmarks",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary
-                    )
-                }
+            Text("Settings", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+        }
+        when (val current = state) {
+            SettingsUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            is SettingsUiState.Error -> Text(current.message, color = MaterialTheme.colorScheme.error)
+            is SettingsUiState.Data -> {
+                ThresholdsSection(current.settings, viewModel::update, viewModel::resetDefaults)
+                Spacer(Modifier.height(14.dp))
+                IndexSection(
+                    indexedCount = current.indexedCount,
+                    dbSizeBytes = current.dbSizeBytes,
+                    phase = current.scanProgress.phase,
+                    onRescan = viewModel::rescanNewPhotos,
+                    onFullRescan = viewModel::fullRescan,
+                    onClear = { showClearConfirmation = true }
+                )
+                Spacer(Modifier.height(14.dp))
+                AboutSection(current.appInfo.versionName, current.appInfo.libraries, current.appInfo.privacyStatement)
+                Spacer(Modifier.height(24.dp))
             }
         }
+    }
+
+    if (showClearConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirmation = false },
+            title = { Text("Clear indexed data?") },
+            text = { Text("This removes the local photo index and scan checkpoint. Your photos on the device are not deleted.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showClearConfirmation = false
+                    viewModel.clearIndex()
+                }) { Text("Clear index") }
+            },
+            dismissButton = { TextButton(onClick = { showClearConfirmation = false }) { Text("Cancel") } }
+        )
+    }
+}
+
+@Composable
+private fun ThresholdsSection(settings: Settings, update: (Settings) -> Unit, reset: () -> Unit) {
+    SectionCard("Thresholds") {
+        IntegerSlider("dHash maximum distance", settings.dHashMax, 0..32) { update(settings.copy(dHashMax = it)) }
+        IntegerSlider("pHash maximum distance", settings.pHashMax, 0..32) { update(settings.copy(pHashMax = it)) }
+        FloatSlider("Blur threshold", settings.blurThreshold.toFloat(), 1f..5000f, "%.0f") {
+            update(settings.copy(blurThreshold = it.toDouble()))
+        }
+        FloatSlider("Label confidence", settings.labelConfidence, 0.1f..0.99f, "%.2f") {
+            update(settings.copy(labelConfidence = it))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()) {
+            Text("Ignore scan constraints", color = Color.White)
+            Switch(checked = settings.scanIgnoreConstraints, onCheckedChange = {
+                update(settings.copy(scanIgnoreConstraints = it))
+            })
+        }
+        OutlinedButton(onClick = reset, modifier = Modifier.fillMaxWidth()) { Text("Reset to defaults") }
+    }
+}
+
+@Composable
+private fun IntegerSlider(label: String, value: Int, range: IntRange, onValue: (Int) -> Unit) {
+    Text("$label: $value", color = Color.White)
+    Slider(value = value.toFloat(), onValueChange = { onValue(it.toInt()) }, valueRange = range.first.toFloat()..range.last.toFloat(), steps = range.last - range.first - 1)
+}
+
+@Composable
+private fun FloatSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, format: String, onValue: (Float) -> Unit) {
+    Text("$label: ${String.format(Locale.getDefault(), format, value)}", color = Color.White)
+    Slider(value = value.coerceIn(range), onValueChange = onValue, valueRange = range)
+}
+
+@Composable
+private fun IndexSection(
+    indexedCount: Int,
+    dbSizeBytes: Long,
+    phase: ScanPhase,
+    onRescan: () -> Unit,
+    onFullRescan: () -> Unit,
+    onClear: () -> Unit
+) {
+    SectionCard("Index") {
+        InfoRow("Indexed images", indexedCount.toString())
+        InfoRow("Database size", String.format(Locale.getDefault(), "%.2f MB", dbSizeBytes / (1024.0 * 1024.0)))
+        InfoRow("Last scan state", phase.name.lowercase().replaceFirstChar { it.uppercase() })
+        Button(onClick = onRescan, modifier = Modifier.fillMaxWidth()) { Text("Rescan new photos") }
+        OutlinedButton(onClick = onFullRescan, modifier = Modifier.fillMaxWidth()) { Text("Full rescan") }
+        TextButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) { Text("Clear index") }
+    }
+}
+
+@Composable
+private fun AboutSection(versionName: String, libraries: List<String>, privacy: String) {
+    SectionCard("Privacy / About") {
+        InfoRow("Version", versionName)
+        InfoRow("Network permission", "None")
+        InfoRow("Database encrypted", "Pending")
+        Text("Libraries and disclosures", color = Color.White)
+        libraries.forEach { Text("• $it", color = Color.LightGray, style = MaterialTheme.typography.bodySmall) }
+        Text(privacy, color = Color.LightGray, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun SectionCard(title: String, content: @Composable () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            content()
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, color = Color.LightGray)
+        Text(value, color = Color.White)
     }
 }

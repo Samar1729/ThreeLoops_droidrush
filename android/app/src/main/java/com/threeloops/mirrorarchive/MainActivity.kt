@@ -375,8 +375,7 @@ fun MainNavigationApp(
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     onBackClick = { navController.popBackStack() },
-                    onNavigateMetrics = { navController.navigate(Routes.METRICS) },
-                    onLockVault = { isVaultUnlocked = false }
+                    viewModel = hiltViewModel()
                 )
             }
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -113,6 +114,14 @@ fun AlbumsScreen(
                             contentDescription = "Niti Tuning",
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    IconButton(onClick = onNavigateSettings) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.White
                         )
                     }
                 }
