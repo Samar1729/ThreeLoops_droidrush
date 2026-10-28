@@ -6,7 +6,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.threeloops.mirrorarchive.data.db.AppDatabase
 import com.threeloops.mirrorarchive.data.db.SkippedDao
 import com.threeloops.mirrorarchive.data.db.ScanStateDao
-import com.threeloops.mirrorarchive.security.TemporaryDatabasePassphrase
+import com.threeloops.mirrorarchive.security.KeyProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,10 +24,23 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        build(context)
+    fun provideKeyProvider(@ApplicationContext context: Context): KeyProvider = KeyProvider(
+        keystoreProviderName = "AndroidKeyStore",
+        keyFileDirectory = context.noBackupFilesDir,
+        hasExistingDatabase = { context.getDatabasePath(DATABASE_NAME).exists() }
+    )
 
-    fun build(ctx: Context): AppDatabase {
+    @Provides
+    @Singleton
+    fun provideAppDatabase(@ApplicationContext context: Context, keyProvider: KeyProvider): AppDatabase =
+        build(context, keyProvider)
+
+    fun build(ctx: Context): AppDatabase = build(
+        ctx,
+        createKeyProvider(ctx.applicationContext)
+    )
+
+    private fun build(ctx: Context, keyProvider: KeyProvider): AppDatabase {
         val context = ctx.applicationContext
         val migrationPrefs = context.getSharedPreferences(MIGRATION_PREFS, Context.MODE_PRIVATE)
         if (!migrationPrefs.getBoolean(LEGACY_DATABASE_REMOVED, false)) {
@@ -37,26 +50,40 @@ object DatabaseModule {
                 "Could not save the legacy database migration marker"
             }
         }
-        return build(context, DATABASE_NAME)
+        return build(context, DATABASE_NAME, keyProvider)
     }
 
     /** Uses the same SQLCipher configuration for isolated Room instrumented-test databases. */
     fun build(ctx: Context, databaseName: String): AppDatabase {
         val context = ctx.applicationContext
+        return build(context, databaseName, createKeyProvider(context))
+    }
+
+    private fun build(ctx: Context, databaseName: String, keyProvider: KeyProvider): AppDatabase {
+        val context = ctx.applicationContext
         System.loadLibrary("sqlcipher")
-        // TEMPORARY passphrase for R-10a. TODO(R-10b): replace with a Keystore-backed key.
-        val passphraseBytes = TemporaryDatabasePassphrase.bytes()
+        val passphraseBytes = keyProvider.getPassphrase()
         return Room.databaseBuilder(context, AppDatabase::class.java, databaseName)
             .openHelperFactory(SupportOpenHelperFactory(passphraseBytes))
             .fallbackToDestructiveMigration()
             .addCallback(object : androidx.room.RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
-                    super.onOpen(db)
-                    db.setForeignKeyConstraintsEnabled(true)
+                    try {
+                        super.onOpen(db)
+                        db.setForeignKeyConstraintsEnabled(true)
+                    } finally {
+                        passphraseBytes.fill(0)
+                    }
                 }
             })
             .build()
     }
+
+    private fun createKeyProvider(context: Context) = KeyProvider(
+        keystoreProviderName = "AndroidKeyStore",
+        keyFileDirectory = context.noBackupFilesDir,
+        hasExistingDatabase = { context.getDatabasePath(DATABASE_NAME).exists() }
+    )
 
     @Provides
     @Singleton
