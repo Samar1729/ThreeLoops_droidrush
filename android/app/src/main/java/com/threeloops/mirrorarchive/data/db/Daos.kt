@@ -251,3 +251,15 @@ interface SkippedDao {
     @Query("DELETE FROM skipped_images")
     suspend fun deleteAll()
 }
+
+@Dao
+interface PipelineStatDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(stat: PipelineStatEntity)
+
+    @Query("SELECT * FROM pipeline_stats ORDER BY startedAt DESC LIMIT :limit")
+    suspend fun latestRuns(limit: Int): List<PipelineStatEntity>
+
+    @Query("SELECT * FROM pipeline_stats ORDER BY startedAt DESC LIMIT 1")
+    fun observeLatest(): Flow<PipelineStatEntity?>
+}
