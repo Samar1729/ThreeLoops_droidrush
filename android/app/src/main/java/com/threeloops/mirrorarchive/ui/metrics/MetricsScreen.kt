@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -37,6 +40,7 @@ fun MetricsScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val isBenchmarking by viewModel.isBenchmarking.collectAsStateWithLifecycle()
     Column(
         modifier = modifier.fillMaxSize().background(Color(0xFF0C0C0E))
             .verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
@@ -50,22 +54,52 @@ fun MetricsScreen(
         when (val current = state) {
             MetricsUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             is MetricsUiState.Error -> Text(current.message, color = MaterialTheme.colorScheme.error)
-            is MetricsUiState.Data -> MetricsCards(current.snapshot)
+            is MetricsUiState.Data -> MetricsCards(
+                metrics = current.snapshot,
+                isBenchmarking = isBenchmarking,
+                onRunBenchmark = { viewModel.runHashBenchmark() }
+            )
         }
         Spacer(Modifier.height(20.dp))
     }
 }
 
 @Composable
-private fun MetricsCards(metrics: MetricsSnapshot) {
+private fun MetricsCards(
+    metrics: MetricsSnapshot,
+    isBenchmarking: Boolean,
+    onRunBenchmark: () -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         MetricsCard("Index and performance") {
             MetricRow("Images indexed", metrics.imagesIndexed.takeIf { it > 0 }?.toString() ?: "—")
             MetricRow("Average processing time", metrics.avgMsPerImage.formatMs())
-            MetricRow("Throughput", metrics.throughputImgPerSec.formatRate())
+            MetricRow("Throughput (Worker)", metrics.throughputImgPerSec.formatRate())
+            MetricRow("Hash throughput (Benchmark)", metrics.hashThroughputImgPerSec.formatRate())
             MetricRow("Database size", metrics.dbSizeMb.formatMb())
             MetricRow("Peak heap", metrics.peakHeapMb.formatMb())
             MetricRow("Network permission", metrics.networkPermission)
+        }
+        MetricsCard("Perceptual Hash Benchmark (S-7)") {
+            MetricRow("Benchmark throughput", metrics.hashThroughputImgPerSec.formatRate())
+            Spacer(Modifier.height(4.dp))
+            Button(
+                onClick = onRunBenchmark,
+                enabled = !isBenchmarking,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isBenchmarking) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Benchmarking 100 thumbnails...")
+                } else {
+                    Text("Run Hash Benchmark (100 thumbnails)")
+                }
+            }
         }
         MetricsCard("Pipeline time by stage") {
             val maxMs = metrics.perStageMs.values.maxOrNull() ?: 0.0
