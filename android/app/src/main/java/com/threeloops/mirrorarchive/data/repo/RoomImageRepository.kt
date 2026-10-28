@@ -43,7 +43,19 @@ class RoomImageRepository @Inject constructor(
     private val scanStateDao = database.scanStateDao()
 
     override suspend fun saveBatch(items: List<IndexedImage>, checkpointId: Long) =
-        withContext(Dispatchers.IO) {
+        saveBatchInternal(items, checkpointId, generationBaseline = null)
+
+    override suspend fun saveIncrementalBatch(
+        items: List<IndexedImage>,
+        checkpointId: Long,
+        generationBaseline: Long
+    ) = saveBatchInternal(items, checkpointId, generationBaseline)
+
+    private suspend fun saveBatchInternal(
+        items: List<IndexedImage>,
+        checkpointId: Long,
+        generationBaseline: Long?
+    ) = withContext(Dispatchers.IO) {
             val now = System.currentTimeMillis()
             val previousState = scanStateDao.observe().first()
             val storedImageCount = imageDao.count().first().toLong()
@@ -53,7 +65,7 @@ class RoomImageRepository @Inject constructor(
             val totalCount = maxOf(previousState?.totalCount ?: 0L, storedImageCount + addedRows)
             val processedCount = ((previousState?.processedCount ?: 0L) + items.size)
                 .coerceAtMost(totalCount)
-            val lastGeneration = maxOf(
+            val lastGeneration = generationBaseline ?: maxOf(
                 previousState?.lastGeneration ?: 0L,
                 items.maxOfOrNull { it.generationModified } ?: 0L
             )
@@ -175,6 +187,10 @@ class RoomImageRepository @Inject constructor(
         mediaIds.distinct().chunked(SQLITE_ID_CHUNK_SIZE).forEach { chunk ->
             if (chunk.isNotEmpty()) imageDao.deleteByMediaIds(chunk)
         }
+    }
+
+    override suspend fun allMediaIds(): List<Long> = withContext(Dispatchers.IO) {
+        imageDao.allMediaIds()
     }
 
     override fun scanState(): Flow<ScanState> = scanStateDao.observe()

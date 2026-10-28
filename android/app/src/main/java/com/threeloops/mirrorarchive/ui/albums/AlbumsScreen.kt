@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -85,6 +86,14 @@ fun AlbumsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    IconButton(onClick = viewModel::syncNewPhotos) {
+                        Icon(
+                            imageVector = Icons.Outlined.Sync,
+                            contentDescription = "Sync new photos",
+                            tint = Color.White
+                        )
+                    }
+
                     // Ultra-subtle monospace telemetry badge
                     Box(
                         modifier = Modifier

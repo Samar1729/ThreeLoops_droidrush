@@ -36,6 +36,14 @@ data class AppInfo(
     val privacyStatement: String
 )
 
+internal fun Settings.clampedForStorage() = copy(
+    dHashMax = dHashMax.coerceIn(0, 32),
+    pHashMax = pHashMax.coerceIn(0, 32),
+    blurThreshold = blurThreshold.takeIf { it.isFinite() && it > 0.0 } ?: Settings().blurThreshold,
+    labelConfidence = labelConfidence.takeIf { it.isFinite() }?.coerceIn(0.1f, 0.99f)
+        ?: Settings().labelConfidence
+)
+
 @Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -106,14 +114,6 @@ class SettingsRepository @Inject constructor(
         return listOf(dbFile, java.io.File(dbFile.path + "-wal"), java.io.File(dbFile.path + "-shm"))
             .sumOf { file -> if (file.isFile) file.length() else 0L }
     }
-
-    internal fun Settings.clampedForStorage() = copy(
-        dHashMax = dHashMax.coerceIn(0, 32),
-        pHashMax = pHashMax.coerceIn(0, 32),
-        blurThreshold = blurThreshold.takeIf { it.isFinite() && it > 0.0 } ?: Settings().blurThreshold,
-        labelConfidence = labelConfidence.takeIf { it.isFinite() }?.coerceIn(0.1f, 0.99f)
-            ?: Settings().labelConfidence
-    )
 
     private companion object {
         const val DATABASE_NAME = "mirror_archive.db"

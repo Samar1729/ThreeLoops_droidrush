@@ -18,6 +18,13 @@ interface ImageRepository {
      */
     suspend fun saveBatch(items: List<IndexedImage>, checkpointId: Long = 0L)
 
+    /** Saves incremental rows while retaining the old generation baseline until the run commits. */
+    suspend fun saveIncrementalBatch(
+        items: List<IndexedImage>,
+        checkpointId: Long,
+        generationBaseline: Long
+    ) = saveBatch(items, checkpointId)
+
     /**
      * Observes images matching the given tag query.
      */
@@ -72,6 +79,9 @@ interface ImageRepository {
      * Deletes rows by MediaStore IDs.
      */
     suspend fun deleteRows(mediaIds: List<Long>)
+
+    /** Returns indexed MediaStore IDs for deletion reconciliation. */
+    suspend fun allMediaIds(): List<Long> = emptyList()
 
     /**
      * Observes media scanning progress state.
