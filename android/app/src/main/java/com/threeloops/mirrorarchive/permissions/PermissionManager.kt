@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -124,9 +126,13 @@ class PermissionManager @Inject constructor(
                     trySend(Unit)
                 }
             }
-            ProcessLifecycleOwner.get().lifecycle.addObserver(observer)
+            withContext(Dispatchers.Main.immediate) {
+                ProcessLifecycleOwner.get().lifecycle.addObserver(observer)
+            }
             awaitClose {
-                ProcessLifecycleOwner.get().lifecycle.removeObserver(observer)
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    ProcessLifecycleOwner.get().lifecycle.removeObserver(observer)
+                }
             }
         }
 

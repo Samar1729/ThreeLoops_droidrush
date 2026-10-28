@@ -52,10 +52,10 @@ fun NowIndexingBar(
                 .padding(horizontal = 16.dp, vertical = 6.dp)
                 .glass(
                     shape = RoundedCornerShape(18.dp),
-                    backgroundColor = Color(0xEE121216),
+                    backgroundColor = Color(0xF7FFFFFF),
                     borderWidth = 1.dp,
                     topBorderAlpha = 0.35f,
-                    bottomBorderAlpha = 0.08f
+                    bottomBorderAlpha = 0.12f
                 )
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
@@ -85,7 +85,7 @@ fun NowIndexingBar(
                             },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = Color(0xFF064E3B)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         // Monospace telemetry numbers
@@ -93,7 +93,7 @@ fun NowIndexingBar(
                             text = "${progress.done}/${progress.total}",
                             fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace,
-                            color = Color(0xFFA1A1AA)
+                            color = Color(0xFF4B5563)
                         )
                     }
 
@@ -108,7 +108,7 @@ fun NowIndexingBar(
                                 modifier = Modifier
                                     .glass(
                                         shape = RoundedCornerShape(10.dp),
-                                        backgroundColor = Color.White.copy(alpha = 0.08f),
+                                        backgroundColor = Color(0xFFD1FAE5),
                                         borderWidth = 1.dp,
                                         topBorderAlpha = 0.30f,
                                         bottomBorderAlpha = 0.06f
@@ -119,7 +119,7 @@ fun NowIndexingBar(
                                     Icon(
                                         imageVector = Icons.Outlined.Speed,
                                         contentDescription = null,
-                                        tint = Color(0xFFA1A1AA),
+                                        tint = Color(0xFF047857),
                                         modifier = Modifier.size(11.dp)
                                     )
                                     Spacer(modifier = Modifier.width(3.dp))
@@ -128,7 +128,7 @@ fun NowIndexingBar(
                                         fontSize = 10.sp,
                                         fontFamily = FontFamily.Monospace,
                                         fontWeight = FontWeight.Medium,
-                                        color = Color.White
+                                        color = Color(0xFF065F46)
                                     )
                                 }
                             }
@@ -159,7 +159,7 @@ fun NowIndexingBar(
                                     fontSize = 10.sp,
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF10B981)
+                                    color = Color(0xFF065F46)
                                 )
                             }
                         }
@@ -177,7 +177,7 @@ fun NowIndexingBar(
                             .height(3.dp)
                             .clip(RoundedCornerShape(2.dp)),
                         color = Color(0xFF10B981),
-                        trackColor = Color(0xFF27272A)
+                        trackColor = Color(0xFFD1FAE5)
                     )
                 }
             }

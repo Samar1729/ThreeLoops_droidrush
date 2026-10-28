@@ -30,9 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
-import com.threeloops.mirrorarchive.data.demo.SampleMediaSeed
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
-
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.threeloops.mirrorarchive.dupes.DuplicatesViewModel
 
@@ -56,7 +54,7 @@ fun DuplicatesScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF09090B))
+            .background(Color(0xFFF7FCF9))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top Bar
@@ -71,12 +69,13 @@ fun DuplicatesScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF1F1F23))
+                        .background(Color(0xFFE8F5E9))
+                        .border(1.dp, Color(0x3310B981), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.White,
+                        tint = Color(0xFF065F46),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -88,12 +87,12 @@ fun DuplicatesScreen(
                         text = "Duplicates & Bursts",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color(0xFF064E3B)
                     )
                     Text(
                         text = if (isPurged) "Library Optimized • 0 redundant duplicates" else "1 burst sequence • ~13.2 MB reclaimable",
                         fontSize = 12.sp,
-                        color = if (isPurged) Color(0xFF10B981) else Color(0xFFA1A1AA)
+                        color = if (isPurged) Color(0xFF059669) else Color(0xFF64748B)
                     )
                 }
             }
@@ -109,8 +108,8 @@ fun DuplicatesScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF141418))
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                            .background(Color.White)
+                            .border(1.dp, Color(0x2210B981), RoundedCornerShape(16.dp))
                     ) {
                         Row(
                             modifier = Modifier.padding(18.dp),
@@ -124,7 +123,7 @@ fun DuplicatesScreen(
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.SemiBold,
                                     letterSpacing = 1.sp,
-                                    color = Color(0xFFA1A1AA)
+                                    color = Color(0xFF059669)
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
@@ -132,7 +131,7 @@ fun DuplicatesScreen(
                                     fontSize = 28.sp,
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isPurged) Color(0xFF10B981) else Color.White
+                                    color = if (isPurged) Color(0xFF059669) else Color(0xFF064E3B)
                                 )
                             }
 
@@ -149,8 +148,8 @@ fun DuplicatesScreen(
                                         ).show()
                                     },
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.White,
-                                        contentColor = Color.Black
+                                        containerColor = Color(0xFF059669),
+                                        contentColor = Color.White
                                     ),
                                     shape = RoundedCornerShape(20.dp),
                                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
@@ -159,21 +158,21 @@ fun DuplicatesScreen(
                                         text = "Keep Best",
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.Black
+                                        color = Color.White
                                     )
                                 }
                             } else {
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0x2210B981), RoundedCornerShape(12.dp))
-                                        .border(1.dp, Color(0xFF10B981).copy(alpha = 0.40f), RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFD1FAE5), RoundedCornerShape(12.dp))
+                                        .border(1.dp, Color(0x3310B981), RoundedCornerShape(12.dp))
                                         .padding(horizontal = 12.dp, vertical = 7.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Outlined.Check,
                                             contentDescription = null,
-                                            tint = Color(0xFF10B981),
+                                            tint = Color(0xFF065F46),
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
@@ -182,7 +181,7 @@ fun DuplicatesScreen(
                                             fontSize = 11.sp,
                                             fontFamily = FontFamily.Monospace,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF10B981)
+                                            color = Color(0xFF065F46)
                                         )
                                     }
                                 }
@@ -197,8 +196,8 @@ fun DuplicatesScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF141418))
-                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                            .background(Color.White)
+                            .border(1.dp, Color(0x2210B981), RoundedCornerShape(16.dp))
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
@@ -211,19 +210,19 @@ fun DuplicatesScreen(
                                         text = "Action Burst Sequence (${displayedBurstItems.size} shots)",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White
+                                        color = Color(0xFF064E3B)
                                     )
                                     Text(
                                         text = if (isPurged) "Purged: Kept Best Shot • 3 deleted" else "98% visual similarity • 1 Best Shot candidate",
                                         fontSize = 11.sp,
-                                        color = if (isPurged) Color(0xFF10B981) else Color(0xFFA1A1AA)
+                                        color = if (isPurged) Color(0xFF059669) else Color(0xFF64748B)
                                     )
                                 }
 
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFF1F1F23), RoundedCornerShape(8.dp))
-                                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFD1FAE5), RoundedCornerShape(8.dp))
+                                        .border(1.dp, Color(0x3310B981), RoundedCornerShape(8.dp))
                                         .padding(horizontal = 8.dp, vertical = 3.dp)
                                 ) {
                                     Text(
@@ -231,7 +230,7 @@ fun DuplicatesScreen(
                                         fontSize = 10.sp,
                                         fontFamily = FontFamily.Monospace,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFFE4E4E7)
+                                        color = Color(0xFF065F46)
                                     )
                                 }
                             }
@@ -276,10 +275,10 @@ private fun BurstPhotoItemCard(
             .width(170.dp)
             .height(210.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF18181B))
+            .background(Color(0xFFE2E8F0))
             .border(
                 width = if (photo.isWinner) 2.dp else 1.dp,
-                color = if (photo.isWinner) Color(0xFF10B981) else Color.White.copy(alpha = 0.12f),
+                color = if (photo.isWinner) Color(0xFF059669) else Color(0x2210B981),
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick() }
@@ -298,7 +297,7 @@ private fun BurstPhotoItemCard(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.90f)),
+                        colors = listOf(Color.Transparent, Color(0xD9064E3B)),
                         startY = 200f
                     )
                 )
@@ -316,8 +315,7 @@ private fun BurstPhotoItemCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xEE103826), RoundedCornerShape(8.dp))
-                        .border(1.dp, Color(0xFF10B981), RoundedCornerShape(8.dp))
+                        .background(Color(0xF0059669), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
                     Column {
@@ -326,7 +324,7 @@ private fun BurstPhotoItemCard(
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10B981)
+                            color = Color.White
                         )
                         Text(
                             text = "Sharpness: 94.2 | Face: 0.96",
@@ -341,15 +339,14 @@ private fun BurstPhotoItemCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xEE27272A), RoundedCornerShape(8.dp))
-                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                        .background(Color(0xCC000000), RoundedCornerShape(8.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = photo.rejectionReason ?: "Drop • Sub-optimal",
                         fontSize = 9.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFFA1A1AA)
+                        color = Color.White
                     )
                 }
             }

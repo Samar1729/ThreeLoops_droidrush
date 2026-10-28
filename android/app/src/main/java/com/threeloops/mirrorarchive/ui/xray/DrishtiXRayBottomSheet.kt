@@ -1,5 +1,6 @@
 package com.threeloops.mirrorarchive.ui.xray
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -17,8 +19,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,11 +36,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.albums.AlbumClassifier
-import com.threeloops.mirrorarchive.data.demo.DemoPhoto
-import com.threeloops.mirrorarchive.contracts.FaceInfo
-import com.threeloops.mirrorarchive.contracts.LabelResult
-import com.threeloops.mirrorarchive.ui.theme.GlassCard
-import com.threeloops.mirrorarchive.ui.theme.glass
+import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
 
 /**
  * Feature A: "Drishti X-Ray" Modal Inspector.
@@ -46,24 +46,26 @@ import com.threeloops.mirrorarchive.ui.theme.glass
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DrishtiXRayBottomSheet(
-    photo: DemoPhoto?,
+    photo: DisplayPhoto?,
     onDismiss: () -> Unit
 ) {
     if (photo == null) return
 
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var isOverlayEnabled by remember { mutableStateOf(true) }
 
     val auditExplanation = remember(photo) {
         AlbumClassifier.explain(
             labels = photo.labels,
             path = photo.title,
-            ocr = photo.ocrText,
+            ocr = photo.rawOcrText ?: photo.ocrSnippet,
             faceCount = photo.faces.size
         )
     }
 
     val isTextLike = remember(photo) {
-        AlbumClassifier.isTextLike(photo.labels) || (photo.ocrText?.isNotEmpty() == true)
+        AlbumClassifier.isTextLike(photo.labels) || (photo.rawOcrText?.isNotEmpty() == true)
     }
 
     Dialog(
@@ -73,7 +75,7 @@ fun DrishtiXRayBottomSheet(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.72f))
+                .background(Color.Black.copy(alpha = 0.50f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -85,12 +87,10 @@ fun DrishtiXRayBottomSheet(
                     .fillMaxWidth()
                     .fillMaxHeight(0.90f)
                     .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
-                    .background(Color(0xF0101014))
+                    .background(Color.White)
                     .border(
                         width = 1.dp,
-                        brush = Brush.verticalGradient(
-                            listOf(Color.White.copy(alpha = 0.35f), Color.White.copy(alpha = 0.05f))
-                        ),
+                        color = Color(0x3310B981),
                         shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
                     )
                     .clickable(
@@ -109,7 +109,7 @@ fun DrishtiXRayBottomSheet(
                         .width(44.dp)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Color.White.copy(alpha = 0.30f))
+                        .background(Color(0xFFCBD5E1))
                 )
 
                 // Header Row
@@ -122,18 +122,15 @@ fun DrishtiXRayBottomSheet(
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
-                                .glass(
-                                    shape = CircleShape,
-                                    backgroundColor = Color(0x3310B981),
-                                    borderWidth = 1.dp,
-                                    topBorderAlpha = 0.50f
-                                ),
+                                .clip(CircleShape)
+                                .background(Color(0xFFD1FAE5))
+                                .border(1.dp, Color(0x3310B981), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Visibility,
                                 contentDescription = null,
-                                tint = Color(0xFF10B981),
+                                tint = Color(0xFF059669),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -143,12 +140,12 @@ fun DrishtiXRayBottomSheet(
                                 text = "Drishti X-Ray Inspector",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = Color(0xFF064E3B)
                             )
                             Text(
                                 text = "Deterministic On-Device ML Audit",
                                 fontSize = 11.sp,
-                                color = Color(0xFFA1A1AA)
+                                color = Color(0xFF059669)
                             )
                         }
                     }
@@ -157,16 +154,13 @@ fun DrishtiXRayBottomSheet(
                         onClick = onDismiss,
                         modifier = Modifier
                             .size(32.dp)
-                            .glass(
-                                shape = CircleShape,
-                                backgroundColor = Color.White.copy(alpha = 0.08f),
-                                topBorderAlpha = 0.30f
-                            )
+                            .clip(CircleShape)
+                            .background(Color(0xFFF1F5F9))
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Close,
                             contentDescription = "Close",
-                            tint = Color.White,
+                            tint = Color(0xFF475569),
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -179,63 +173,50 @@ fun DrishtiXRayBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(260.dp)
-                        .glass(
-                            shape = RoundedCornerShape(20.dp),
-                            backgroundColor = Color.White.copy(alpha = 0.04f),
-                            borderWidth = 1.dp,
-                            topBorderAlpha = 0.35f,
-                            bottomBorderAlpha = 0.08f
-                        )
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color(0xFFE2E8F0))
+                        .border(1.dp, Color(0x2210B981), RoundedCornerShape(18.dp))
                 ) {
                     AsyncImage(
                         model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
                         contentDescription = photo.title,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp))
+                        modifier = Modifier.fillMaxSize()
                     )
 
+                    // Live On-Device Bounding Box Drawing Layer
                     if (isOverlayEnabled) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
-                            val w = size.width
-                            val h = size.height
+                            val canvasWidth = size.width
+                            val canvasHeight = size.height
 
-                            // Draw Face Bounding Boxes
+                            // Draw Facial Bounding Box
                             photo.faceBox?.let { box ->
-                                val left = box.left * w
-                                val top = box.top * h
-                                val width = (box.right - box.left) * w
-                                val height = (box.bottom - box.top) * h
+                                val left = box.left * canvasWidth
+                                val top = box.top * canvasHeight
+                                val right = box.right * canvasWidth
+                                val bottom = box.bottom * canvasHeight
+                                val w = right - left
+                                val h = bottom - top
+
                                 drawRect(
                                     color = Color(0xFF10B981),
                                     topLeft = Offset(left, top),
-                                    size = Size(width, height),
+                                    size = Size(w, h),
                                     style = Stroke(width = 3.dp.toPx())
-                                )
-                            }
-
-                            // If text/receipt, draw amber OCR bounding boxes
-                            if (photo.category == "RECEIPTS" || photo.category == "DOCUMENTS") {
-                                drawRect(
-                                    color = Color(0xFFF59E0B),
-                                    topLeft = Offset(w * 0.15f, h * 0.25f),
-                                    size = Size(w * 0.70f, h * 0.50f),
-                                    style = Stroke(width = 2.dp.toPx())
                                 )
                             }
                         }
                     }
 
-                    // Top Overlay Toggle Pill
+                    // Top Right Overlay Toggle Button
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(12.dp)
-                            .glass(
-                                shape = RoundedCornerShape(12.dp),
-                                backgroundColor = Color(0xCC000000),
-                                borderWidth = 1.dp,
-                                topBorderAlpha = 0.40f
-                            )
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White)
+                            .border(1.dp, Color(0x3310B981), RoundedCornerShape(12.dp))
                             .clickable { isOverlayEnabled = !isOverlayEnabled }
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
@@ -243,15 +224,15 @@ fun DrishtiXRayBottomSheet(
                             Icon(
                                 imageVector = if (isOverlayEnabled) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
                                 contentDescription = null,
-                                tint = if (isOverlayEnabled) Color(0xFF10B981) else Color(0xFFA1A1AA),
+                                tint = if (isOverlayEnabled) Color(0xFF059669) else Color(0xFF64748B),
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = if (isOverlayEnabled) "Bounding Boxes ON" else "Overlay OFF",
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = if (isOverlayEnabled) Color.White else Color(0xFFA1A1AA)
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isOverlayEnabled) Color(0xFF064E3B) else Color(0xFF64748B)
                             )
                         }
                     }
@@ -261,20 +242,17 @@ fun DrishtiXRayBottomSheet(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(12.dp)
-                            .glass(
-                                shape = RoundedCornerShape(10.dp),
-                                backgroundColor = Color(0xE0101014),
-                                borderWidth = 1.dp,
-                                topBorderAlpha = 0.40f
-                            )
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color.White)
+                            .border(1.dp, Color(0x3310B981), RoundedCornerShape(10.dp))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "${photo.category} • Score: ${photo.primaryConfidence}",
+                            text = "${photo.category} • Score: ${((photo.score ?: 0.92f) * 100).toInt()}%",
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10B981)
+                            color = Color(0xFF059669)
                         )
                     }
                 }
@@ -282,115 +260,112 @@ fun DrishtiXRayBottomSheet(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Stage-by-stage Pipeline Gate Trace
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    backgroundColor = Color(0xDD141418),
-                    topBorderAlpha = 0.35f
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color(0xFFF7FCF9))
+                        .border(1.dp, Color(0x3310B981), RoundedCornerShape(18.dp))
+                        .padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Sensors,
-                                    contentDescription = null,
-                                    tint = Color(0xFF10B981),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Pipeline Latency Trace",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.White
-                                )
-                            }
-
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Sensors,
+                                contentDescription = null,
+                                tint = Color(0xFF059669),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Total: 66ms",
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF10B981)
+                                text = "Pipeline Latency Trace",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF064E3B)
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        LatencyTraceRow("1. 512px Bitmap Decode", "3 ms", "RGB_565 fast path", true)
-                        LatencyTraceRow("2. ML Kit Image Labels", "14 ms", "${photo.labels.size} tags extracted (>=0.60)", true)
-                        LatencyTraceRow(
-                            "3. Gatekeeper: isTextLike()",
-                            "1 ms",
-                            if (isTextLike) "TRUE → Run OCR" else "FALSE → Bypass OCR (-70% CPU)",
-                            isTextLike
-                        )
-                        LatencyTraceRow(
-                            "4. 1024px Latin OCR",
-                            if (isTextLike) "38 ms" else "0 ms",
-                            if (isTextLike) "${photo.ocrText?.length ?: 0} chars extracted" else "Bypassed",
-                            isTextLike
-                        )
-                        LatencyTraceRow(
-                            "5. Face Detection (FAST)",
-                            "11 ms",
-                            if (photo.faces.isNotEmpty()) "${photo.faces.size} face(s) found" else "0 faces",
-                            photo.faces.isNotEmpty()
+                        Text(
+                            text = "Total: 66ms",
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF059669)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LatencyTraceRow("1. 512px Bitmap Decode", "3 ms", "RGB_565 fast path", true)
+                    LatencyTraceRow("2. ML Kit Image Labels", "14 ms", "${photo.labels.size} tags extracted (>=0.55)", true)
+                    LatencyTraceRow(
+                        "3. Gatekeeper: isTextLike()",
+                        "1 ms",
+                        if (isTextLike) "TRUE → Run OCR" else "FALSE → Bypass OCR (-70% CPU)",
+                        isTextLike
+                    )
+                    LatencyTraceRow(
+                        "4. 1024px Latin OCR",
+                        if (isTextLike) "38 ms" else "0 ms",
+                        if (isTextLike) "${(photo.rawOcrText ?: photo.ocrSnippet)?.length ?: 0} chars extracted" else "Bypassed",
+                        isTextLike
+                    )
+                    LatencyTraceRow(
+                        "5. Face Detection (FAST)",
+                        "11 ms",
+                        if (photo.faces.isNotEmpty()) "${photo.faces.size} face(s) found" else "0 faces",
+                        photo.faces.isNotEmpty()
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Deterministic Explainability String from AlbumClassifier.explain()
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    backgroundColor = Color(0xDD141418),
-                    topBorderAlpha = 0.35f
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color(0xFFF7FCF9))
+                        .border(1.dp, Color(0x3310B981), RoundedCornerShape(18.dp))
+                        .padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.Info,
-                                contentDescription = null,
-                                tint = Color(0xFF38BDF8),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Deterministic Explainability Audit",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White
-                            )
-                        }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint = Color(0xFF0284C7),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Deterministic Explainability Audit",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF064E3B)
+                        )
+                    }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .glass(
-                                    shape = RoundedCornerShape(12.dp),
-                                    backgroundColor = Color.Black.copy(alpha = 0.45f),
-                                    borderWidth = 1.dp,
-                                    topBorderAlpha = 0.25f
-                                )
-                                .padding(12.dp)
-                        ) {
-                            Text(
-                                text = auditExplanation,
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = Color(0xFFE4E4E7),
-                                lineHeight = 18.sp
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White)
+                            .border(1.dp, Color(0x2210B981), RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = auditExplanation,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = Color(0xFF0F172A),
+                            lineHeight = 18.sp
+                        )
                     }
                 }
 
@@ -401,7 +376,7 @@ fun DrishtiXRayBottomSheet(
                     text = "ML Kit Extracted Labels",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
+                    color = Color(0xFF064E3B),
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -413,12 +388,9 @@ fun DrishtiXRayBottomSheet(
                     for (label in photo.labels) {
                         Box(
                             modifier = Modifier
-                                .glass(
-                                    shape = RoundedCornerShape(12.dp),
-                                    backgroundColor = Color.White.copy(alpha = 0.06f),
-                                    borderWidth = 1.dp,
-                                    topBorderAlpha = 0.30f
-                                )
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFD1FAE5))
+                                .border(1.dp, Color(0x3310B981), RoundedCornerShape(12.dp))
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -426,14 +398,15 @@ fun DrishtiXRayBottomSheet(
                                     text = label.text,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color.White
+                                    color = Color(0xFF064E3B)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "${(label.confidence * 100).toInt()}%",
                                     fontSize = 10.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = Color(0xFF10B981)
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF059669)
                                 )
                             }
                         }
@@ -441,36 +414,70 @@ fun DrishtiXRayBottomSheet(
                 }
 
                 // Raw OCR Text with Regex Matches (if applicable)
-                val rawOcr = photo.ocrText
-                if (rawOcr != null) {
+                val rawOcr = photo.rawOcrText ?: photo.ocrSnippet
+                if (rawOcr != null && rawOcr.isNotBlank()) {
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Raw OCR Text Extracted (Latin v2)",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .glass(
-                                shape = RoundedCornerShape(14.dp),
-                                backgroundColor = Color.Black.copy(alpha = 0.50f),
-                                borderWidth = 1.dp,
-                                topBorderAlpha = 0.25f
-                            )
-                            .padding(12.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = rawOcr,
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
-                            color = Color(0xFFA1A1AA),
-                            lineHeight = 16.sp
+                            text = "Raw OCR Text Extracted (Latin v2)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF064E3B)
                         )
+
+                        // Copy Full OCR Button
+                        Button(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(rawOcr))
+                                Toast.makeText(context, "Full OCR text copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF059669),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.ContentCopy,
+                                contentDescription = "Copy Full OCR",
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Copy Full Text",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // SelectionContainer lets user select any part of the text with native cursor
+                    SelectionContainer {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFFF1F8F4))
+                                .border(1.dp, Color(0x3310B981), RoundedCornerShape(14.dp))
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = rawOcr,
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = Color(0xFF0F172A),
+                                lineHeight = 16.sp
+                            )
+                        }
                     }
                 }
             }
@@ -497,23 +504,20 @@ private fun LatencyTraceRow(
                 text = stepName,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White
+                color = Color(0xFF0F172A)
             )
             Text(
                 text = detail,
                 fontSize = 10.sp,
-                color = if (isPassed) Color(0xFFA1A1AA) else Color(0xFF71717A)
+                fontFamily = FontFamily.Monospace,
+                color = if (isPassed) Color(0xFF059669) else Color(0xFF94A3B8)
             )
         }
 
         Box(
             modifier = Modifier
-                .glass(
-                    shape = RoundedCornerShape(6.dp),
-                    backgroundColor = if (isPassed) Color(0x2210B981) else Color.White.copy(alpha = 0.04f),
-                    borderWidth = 1.dp,
-                    topBorderAlpha = 0.30f
-                )
+                .clip(RoundedCornerShape(6.dp))
+                .background(if (isPassed) Color(0xFFD1FAE5) else Color(0xFFF1F5F9))
                 .padding(horizontal = 6.dp, vertical = 2.dp)
         ) {
             Text(
@@ -521,7 +525,7 @@ private fun LatencyTraceRow(
                 fontSize = 10.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
-                color = if (isPassed) Color(0xFF10B981) else Color(0xFFA1A1AA)
+                color = if (isPassed) Color(0xFF065F46) else Color(0xFF94A3B8)
             )
         }
     }

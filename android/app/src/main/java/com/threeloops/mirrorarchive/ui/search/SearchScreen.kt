@@ -1,5 +1,6 @@
 package com.threeloops.mirrorarchive.ui.search
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,8 +13,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.*
@@ -21,28 +24,25 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.threeloops.mirrorarchive.data.demo.DemoPhoto
-import com.threeloops.mirrorarchive.data.demo.DemoSeedData
+import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
 import com.threeloops.mirrorarchive.search.SearchMode
 import com.threeloops.mirrorarchive.search.SearchViewModel
 import com.threeloops.mirrorarchive.ui.theme.AmbientMeshBox
-import com.threeloops.mirrorarchive.ui.theme.TextMuted
-import com.threeloops.mirrorarchive.ui.theme.TextPrimary
-import com.threeloops.mirrorarchive.ui.theme.TextSecondary
-import com.threeloops.mirrorarchive.ui.theme.glass
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
 
 @Composable
@@ -56,7 +56,7 @@ fun SearchScreen(
     val latencyMs by viewModel.lastLatencyMs.collectAsStateWithLifecycle()
 
     var activeChip by remember { mutableStateOf("all") }
-    var inspectingPhoto by remember { mutableStateOf<DemoPhoto?>(null) }
+    var inspectingPhoto by remember { mutableStateOf<DisplayPhoto?>(null) }
 
     // Quick filter chips
     val filterChips = remember {
@@ -84,50 +84,42 @@ fun SearchScreen(
                         text = "Runic Search",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
+                        color = Color(0xFF064E3B),
                         letterSpacing = (-0.5).sp
                     )
                     Text(
                         text = "Offline Tokenized Tags & Latin OCR",
                         fontSize = 11.sp,
-                        color = Color(0xFFA1A1AA)
+                        color = Color(0xFF059669)
                     )
                 }
 
-                // Latency Badge
+                // Monospace Latency Badge
                 Box(
                     modifier = Modifier
-                        .glass(
-                            shape = RoundedCornerShape(10.dp),
-                            backgroundColor = Color(0x3310B981),
-                            borderWidth = 1.dp,
-                            topBorderAlpha = 0.45f
-                        )
-                        .padding(horizontal = 9.dp, vertical = 4.dp)
+                        .background(Color(0xFFD1FAE5), RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0x3310B981), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
                     Text(
                         text = "${latencyMs.coerceAtLeast(8L)}ms",
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF10B981)
+                        color = Color(0xFF065F46)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Frosted Glass Search Input Bar
+            // Green & White Search Input Bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .glass(
-                        shape = RoundedCornerShape(22.dp),
-                        backgroundColor = Color(0xDD141418),
-                        borderWidth = 1.dp,
-                        topBorderAlpha = 0.35f,
-                        bottomBorderAlpha = 0.08f
-                    )
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(Color.White)
+                    .border(1.dp, Color(0x3310B981), RoundedCornerShape(22.dp))
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
@@ -136,7 +128,7 @@ fun SearchScreen(
                     Icon(
                         imageVector = Icons.Outlined.Search,
                         contentDescription = "Search",
-                        tint = TextSecondary,
+                        tint = Color(0xFF059669),
                         modifier = Modifier.size(20.dp)
                     )
 
@@ -152,7 +144,7 @@ fun SearchScreen(
                             Text(
                                 text = if (mode == SearchMode.TAGS) "Search tags, objects, coffee..." else "Search OCR text, GSTIN, amount...",
                                 fontSize = 13.sp,
-                                color = TextMuted
+                                color = Color(0xFF94A3B8)
                             )
                         },
                         colors = TextFieldDefaults.colors(
@@ -161,9 +153,9 @@ fun SearchScreen(
                             disabledContainerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            cursorColor = Color(0xFF10B981)
+                            focusedTextColor = Color(0xFF0F172A),
+                            unfocusedTextColor = Color(0xFF0F172A),
+                            cursorColor = Color(0xFF059669)
                         ),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
@@ -180,7 +172,7 @@ fun SearchScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Close,
                                 contentDescription = "Clear",
-                                tint = TextSecondary,
+                                tint = Color(0xFF64748B),
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -194,13 +186,9 @@ fun SearchScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .glass(
-                        shape = RoundedCornerShape(14.dp),
-                        backgroundColor = Color.White.copy(alpha = 0.05f),
-                        borderWidth = 1.dp,
-                        topBorderAlpha = 0.20f,
-                        bottomBorderAlpha = 0.05f
-                    )
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFE8F5E9))
+                    .border(1.dp, Color(0x3310B981), RoundedCornerShape(14.dp))
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -209,7 +197,7 @@ fun SearchScreen(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(11.dp))
-                        .background(if (isTags) Color.White.copy(alpha = 0.16f) else Color.Transparent)
+                        .background(if (isTags) Color(0xFF059669) else Color.Transparent)
                         .clickable { viewModel.setMode(SearchMode.TAGS) }
                         .padding(vertical = 7.dp),
                     contentAlignment = Alignment.Center
@@ -217,8 +205,8 @@ fun SearchScreen(
                     Text(
                         text = "Tags (${matchedPhotos.size})",
                         fontSize = 12.sp,
-                        fontWeight = if (isTags) FontWeight.SemiBold else FontWeight.Medium,
-                        color = if (isTags) TextPrimary else TextSecondary
+                        fontWeight = if (isTags) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isTags) Color.White else Color(0xFF475569)
                     )
                 }
 
@@ -226,23 +214,23 @@ fun SearchScreen(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(11.dp))
-                        .background(if (!isTags) Color(0x3310B981) else Color.Transparent)
+                        .background(if (!isTags) Color(0xFF059669) else Color.Transparent)
                         .clickable { viewModel.setMode(SearchMode.TEXT) }
                         .padding(vertical = 7.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Text OCR (${matchedPhotos.filter { it.ocrText != null }.size})",
+                        text = "Text OCR (${matchedPhotos.filter { it.rawOcrText != null }.size})",
                         fontSize = 12.sp,
                         fontWeight = if (!isTags) FontWeight.Bold else FontWeight.Medium,
-                        color = if (!isTags) Color(0xFF10B981) else TextSecondary
+                        color = if (!isTags) Color.White else Color(0xFF475569)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Frosted Glass Quick Filter Chips
+            // Green & White Quick Filter Chips
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 2.dp)
@@ -252,12 +240,10 @@ fun SearchScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                if (isSelected) Color(0x3310B981) else Color.White.copy(alpha = 0.06f)
-                            )
+                            .background(if (isSelected) Color(0xFF059669) else Color.White)
                             .border(
                                 width = 1.dp,
-                                color = if (isSelected) Color(0xFF10B981) else Color.White.copy(alpha = 0.15f),
+                                color = if (isSelected) Color(0xFF059669) else Color(0x3310B981),
                                 shape = RoundedCornerShape(14.dp)
                             )
                             .clickable {
@@ -270,7 +256,7 @@ fun SearchScreen(
                             text = chip,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color(0xFF10B981) else TextPrimary
+                            color = if (isSelected) Color.White else Color(0xFF334155)
                         )
                     }
                 }
@@ -290,19 +276,19 @@ fun SearchScreen(
                         Text(
                             text = "No matching photos found",
                             fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF064E3B)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Try 'receipt', 'coffee', 'shell', or 'portrait'",
                             fontSize = 12.sp,
-                            color = TextMuted
+                            color = Color(0xFF64748B)
                         )
                     }
                 }
             } else if (mode == SearchMode.TEXT) {
-                // OCR Mode: 2-Column Grid with OCR Snippet Preview Cards
+                // OCR Mode: 2-Column Grid with Copyable OCR Text Cards
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -319,7 +305,7 @@ fun SearchScreen(
                     }
                 }
             } else {
-                // Tags Mode: 2-Column Grid with Category Chips
+                // Tags Mode: 2-Column Grid
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -349,16 +335,20 @@ fun SearchScreen(
 
 @Composable
 private fun OcrResultCard(
-    photo: DemoPhoto,
+    photo: DisplayPhoto,
     query: String,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    val rawText = photo.rawOcrText ?: photo.ocrSnippet ?: ""
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF141418))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White)
+            .border(1.dp, Color(0x2210B981), RoundedCornerShape(14.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -369,8 +359,8 @@ private fun OcrResultCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(130.dp)
-                .background(Color(0xFF18181B))
+                .height(120.dp)
+                .background(Color(0xFFE2E8F0))
         ) {
             AsyncImage(
                 model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
@@ -384,7 +374,7 @@ private fun OcrResultCard(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .background(Color.Black.copy(alpha = 0.60f), CircleShape)
+                    .background(Color(0xD9064E3B), CircleShape)
                     .padding(5.dp)
             ) {
                 Icon(
@@ -396,7 +386,7 @@ private fun OcrResultCard(
             }
         }
 
-        // OCR Snippet Preview Card with Highlighted Match Spans
+        // OCR Extracted Content with Copy-Paste Support
         Column(modifier = Modifier.padding(10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -404,29 +394,60 @@ private fun OcrResultCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "OCR MATCH",
-                    fontSize = 8.sp,
+                    text = "OCR EXTRACTED",
+                    fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10B981)
+                    color = Color(0xFF059669)
                 )
 
-                if (photo.totalAmount != null) {
+                // Dedicated "Copy Text" button
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFD1FAE5))
+                        .clickable {
+                            if (rawText.isNotEmpty()) {
+                                clipboardManager.setText(AnnotatedString(rawText))
+                                Toast.makeText(context, "Copied OCR text to clipboard!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.ContentCopy,
+                        contentDescription = "Copy OCR",
+                        tint = Color(0xFF065F46),
+                        modifier = Modifier.size(11.dp)
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
                     Text(
-                        text = photo.totalAmount,
-                        fontSize = 10.sp,
+                        text = "Copy",
+                        fontSize = 9.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color(0xFF065F46)
                     )
                 }
             }
 
+            if (photo.totalAmount != null) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Total: ${photo.totalAmount}",
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF064E3B)
+                )
+            }
+
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Highlighted OCR Snippet Text
+            // Highlighted & Selectable OCR Text
             val snippet = remember(photo, query) {
-                val lines = photo.rawOcrText?.lines() ?: emptyList()
+                val lines = rawText.lines().filter { it.isNotBlank() }
                 val matchLine = if (query.isNotEmpty()) {
                     lines.firstOrNull { it.contains(query, ignoreCase = true) }
                 } else null
@@ -434,7 +455,7 @@ private fun OcrResultCard(
                     ?: lines.firstOrNull { it.contains("GSTIN", ignoreCase = true) }
                     ?: lines.firstOrNull { it.contains("TOTAL", ignoreCase = true) }
                     ?: lines.firstOrNull { it.contains("RS.", ignoreCase = true) }
-                    ?: lines.firstOrNull() ?: "MATCHED OCR").trim()
+                    ?: lines.firstOrNull() ?: rawText).trim()
             }
 
             val highlightTarget = remember(snippet, query) {
@@ -446,52 +467,66 @@ private fun OcrResultCard(
                 }
             }
 
-            Text(
-                text = buildAnnotatedString {
-                    val lowerSnippet = snippet.lowercase()
-                    val lowerTarget = highlightTarget.lowercase().trim()
-                    val startIndex = if (lowerTarget.isNotEmpty()) lowerSnippet.indexOf(lowerTarget) else -1
-                    if (startIndex != -1) {
-                        append(snippet.substring(0, startIndex))
-                        withStyle(style = SpanStyle(color = Color(0xFF10B981), fontWeight = FontWeight.Bold)) {
-                            append(snippet.substring(startIndex, startIndex + lowerTarget.length))
-                        }
-                        append(snippet.substring(startIndex + lowerTarget.length))
-                    } else {
-                        withStyle(style = SpanStyle(color = Color(0xFFE4E4E7))) {
-                            append(snippet)
-                        }
-                    }
-                },
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
-                maxLines = 2,
-                lineHeight = 13.sp
-            )
+            // SelectionContainer enables cursor selection and direct copy/paste
+            SelectionContainer {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF1F8F4), RoundedCornerShape(6.dp))
+                        .padding(6.dp)
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            val lowerSnippet = snippet.lowercase()
+                            val lowerTarget = highlightTarget.lowercase().trim()
+                            val startIndex = if (lowerTarget.isNotEmpty()) lowerSnippet.indexOf(lowerTarget) else -1
+                            if (startIndex != -1) {
+                                append(snippet.substring(0, startIndex))
+                                withStyle(style = SpanStyle(color = Color(0xFF059669), fontWeight = FontWeight.Bold)) {
+                                    append(snippet.substring(startIndex, startIndex + lowerTarget.length))
+                                }
+                                append(snippet.substring(startIndex + lowerTarget.length))
+                            } else {
+                                withStyle(style = SpanStyle(color = Color(0xFF334155))) {
+                                    append(snippet)
+                                }
+                            }
+                        },
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 3,
+                        lineHeight = 14.sp
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun TagResultCard(
-    photo: DemoPhoto,
+    photo: DisplayPhoto,
     onClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White)
+            .border(1.dp, Color(0x2210B981), RoundedCornerShape(14.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
+            .padding(8.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.85f)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF18181B))
+                .aspectRatio(0.92f)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFE2E8F0))
         ) {
             AsyncImage(
                 model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
@@ -505,27 +540,26 @@ private fun TagResultCard(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .background(Color.Black.copy(alpha = 0.60f), RoundedCornerShape(10.dp))
-                    .border(0.5.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(10.dp))
+                    .background(Color(0xF0059669), RoundedCornerShape(10.dp))
                     .padding(horizontal = 7.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = photo.tag,
                     fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFFFAFAFA)
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = photo.title,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = Color(0xFF064E3B),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -533,7 +567,7 @@ private fun TagResultCard(
         Text(
             text = photo.subtitle,
             fontSize = 11.sp,
-            color = Color(0xFFA1A1AA),
+            color = Color(0xFF64748B),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
