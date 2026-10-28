@@ -9,6 +9,8 @@ import com.threeloops.mirrorarchive.data.mediastore.ThumbnailLoader
 import com.threeloops.mirrorarchive.data.repo.PIPELINE_VERSION
 import com.threeloops.mirrorarchive.hash.PerceptualHasher
 import com.threeloops.mirrorarchive.ml.ImageAnalyzer
+import com.threeloops.mirrorarchive.metrics.MetricsRecorder
+import com.threeloops.mirrorarchive.metrics.Stage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,22 +25,23 @@ class IndexPipeline @Inject constructor(
     private val loader: ThumbnailLoader,
     private val analyzer: ImageAnalyzer,
     private val hasher: PerceptualHasher,
-    private val skippedDao: SkippedDao
+    private val skippedDao: SkippedDao,
+    private val metricsRecorder: MetricsRecorder
 ) {
     /** Process one MediaStore row, returning null and recording a skip on failure. */
     suspend fun processOne(row: MediaRow): IndexedImage? = withContext(Dispatchers.IO) {
         var bitmap: Bitmap? = null
         var ocrBitmap: Bitmap? = null
         try {
-            bitmap = timed("thumbnail") { loader.load(row.uri, 512) }
+            bitmap = timed(Stage.DECODE) { loader.load(row.uri, 512) }
             if (bitmap == null) {
                 recordSkipped(row.mediaId, "Thumbnail load returned null")
                 return@withContext null
             }
 
             val sourceBitmap = checkNotNull(bitmap)
-            val labels = timed("labels") { analyzer.labels(sourceBitmap) }
-            val faces = timed("faces") { analyzer.faces(sourceBitmap) }
+            val labels = timed(Stage.LABEL) { analyzer.labels(sourceBitmap) }
+            val faces = timed(Stage.FACE) { analyzer.faces(sourceBitmap) }
             val isTextCandidate = analyzer.isTextLike(labels) ||
                 row.displayName.contains("receipt", ignoreCase = true) ||
                 row.displayName.contains("bill", ignoreCase = true) ||
@@ -52,12 +55,12 @@ class IndexPipeline @Inject constructor(
                 row.displayName.contains("pharmacy", ignoreCase = true) ||
                 row.displayName.contains("grocery", ignoreCase = true)
             val ocr = if (isTextCandidate) {
-                ocrBitmap = timed("ocr_thumbnail") { loader.loadForOcr(row.uri) }
-                ocrBitmap?.let { loaded -> timed("ocr") { analyzer.ocr(loaded) } }.orEmpty()
+                ocrBitmap = timed(Stage.DECODE) { loader.loadForOcr(row.uri) }
+                ocrBitmap?.let { loaded -> timed(Stage.OCR) { analyzer.ocr(loaded) } }.orEmpty()
             } else {
                 ""
             }
-            val albums = timed("albums") {
+            val albums = timed(Stage.LABEL) {
                 AlbumClassifier.classify(
                     labels = labels,
                     path = "${row.displayName} ${row.relativePath}",
@@ -65,7 +68,7 @@ class IndexPipeline @Inject constructor(
                     faceCount = faces.size
                 )
             }
-            val hash = timed("hash") { hasher.hashAll(sourceBitmap) }
+            val hash = timed(Stage.HASH) { hasher.hashAll(sourceBitmap) }
 
             IndexedImage(
                 mediaId = row.mediaId,
@@ -127,9 +130,8 @@ class IndexPipeline @Inject constructor(
         }
     }
 
-    /** R-9 metrics hook. Currently pass-through; wrap [block] with MetricsRecorder later. */
-    @Suppress("UNUSED_PARAMETER")
-    private suspend fun <T> timed(stage: String, block: suspend () -> T): T = block()
+    private suspend fun <T> timed(stage: Stage, block: suspend () -> T): T =
+        metricsRecorder.timeSuspend(stage, block)
 
     private companion object {
         val LOGGER: Logger = Logger.getLogger(IndexPipeline::class.java.name)

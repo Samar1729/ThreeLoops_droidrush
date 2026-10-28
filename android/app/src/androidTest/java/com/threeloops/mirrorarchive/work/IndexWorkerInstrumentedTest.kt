@@ -33,6 +33,8 @@ import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import com.threeloops.mirrorarchive.hash.PerceptualHasher
 import com.threeloops.mirrorarchive.hash.PerceptualHasherStub
 import com.threeloops.mirrorarchive.ml.ImageAnalyzerStub
+import com.threeloops.mirrorarchive.metrics.MemoryProbe
+import com.threeloops.mirrorarchive.metrics.MetricsRecorder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +47,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
+import org.mockito.Mockito
 import java.util.concurrent.TimeUnit
 
 /** Runs the real CoroutineWorker with a deterministic MediaStore and thumbnail source. */
@@ -165,7 +168,9 @@ private object WorkerFixtureFactory : WorkerFactory() {
             fixture.repository,
             fixture.source,
             fixture.pipeline,
-            fixture.scanState
+            fixture.scanState,
+            fixture.metricsRecorder,
+            fixture.memoryProbe
         )
     } else {
         null
@@ -176,7 +181,9 @@ private class WorkerFixture {
     val scanState = FakeScanStateDao()
     val skipped = FakeSkippedDao()
     val loader = FakeThumbnailLoader()
-    val pipeline = IndexPipeline(loader, ImageAnalyzerStub(), FastHasher(), skipped)
+    val metricsRecorder = Mockito.mock(MetricsRecorder::class.java)
+    val memoryProbe = Mockito.mock(MemoryProbe::class.java)
+    val pipeline = IndexPipeline(loader, ImageAnalyzerStub(), FastHasher(), skipped, metricsRecorder)
     val repository = RecordingImageRepository(scanState)
     var source: MediaStoreSource = FakeMediaStore(emptyList())
 }

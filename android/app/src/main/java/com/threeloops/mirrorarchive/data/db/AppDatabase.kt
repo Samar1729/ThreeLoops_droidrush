@@ -29,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun faceDao(): FaceDao
     abstract fun scanStateDao(): ScanStateDao
     abstract fun skippedDao(): SkippedDao
+    abstract fun pipelineStatDao(): PipelineStatDao
 
     companion object {
         private const val DATABASE_NAME = "mirror_archive.db"

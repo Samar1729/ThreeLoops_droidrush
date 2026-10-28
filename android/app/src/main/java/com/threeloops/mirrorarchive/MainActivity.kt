@@ -376,13 +376,14 @@ fun MainNavigationApp(
                 SettingsScreen(
                     onBackClick = { navController.popBackStack() },
                     onNavigateMetrics = { navController.navigate(Routes.METRICS) },
-                    onLockVault = { isVaultUnlocked = false }
+                    viewModel = hiltViewModel()
                 )
             }
 
             composable(Routes.METRICS) {
                 MetricsScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    viewModel = hiltViewModel()
                 )
             }
             }

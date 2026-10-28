@@ -157,6 +157,9 @@ abstract class ImageDao {
     @Query("DELETE FROM images WHERE mediaId IN (:ids)")
     abstract suspend fun deleteByMediaIds(ids: List<Long>)
 
+    @Query("DELETE FROM images")
+    abstract suspend fun deleteAll()
+
     @Query("SELECT mediaId FROM images ORDER BY mediaId ASC")
     abstract suspend fun allMediaIds(): List<Long>
 }
@@ -228,6 +231,9 @@ interface ScanStateDao {
 
     @Upsert
     suspend fun upsert(state: ScanStateEntity)
+
+    @Query("DELETE FROM pipeline_stats")
+    suspend fun deletePipelineStats()
 }
 
 @Dao
@@ -241,4 +247,19 @@ interface SkippedDao {
 
     @Query("SELECT COUNT(*) FROM skipped_images")
     fun count(): Flow<Int>
+
+    @Query("DELETE FROM skipped_images")
+    suspend fun deleteAll()
+}
+
+@Dao
+interface PipelineStatDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(stat: PipelineStatEntity)
+
+    @Query("SELECT * FROM pipeline_stats ORDER BY startedAt DESC LIMIT :limit")
+    suspend fun latestRuns(limit: Int): List<PipelineStatEntity>
+
+    @Query("SELECT * FROM pipeline_stats ORDER BY startedAt DESC LIMIT 1")
+    fun observeLatest(): Flow<PipelineStatEntity?>
 }
