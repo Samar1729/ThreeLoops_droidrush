@@ -1,8 +1,6 @@
 package com.threeloops.mirrorarchive.data.db
 
 import android.content.Context
-import androidx.room.Room
-import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.threeloops.mirrorarchive.contracts.AlbumType
@@ -16,6 +14,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.threeloops.mirrorarchive.di.DatabaseModule
 import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
@@ -171,19 +170,7 @@ class RoomDaoInstrumentedTest {
         assertNotNull(scalarString("SELECT reason FROM skipped_images WHERE mediaId = 505"))
     }
 
-    private fun openDatabase(): AppDatabase = Room.databaseBuilder(
-        context,
-        AppDatabase::class.java,
-        databaseName
-    )
-        .fallbackToDestructiveMigration()
-        .addCallback(object : androidx.room.RoomDatabase.Callback() {
-            override fun onOpen(db: SupportSQLiteDatabase) {
-                super.onOpen(db)
-                db.setForeignKeyConstraintsEnabled(true)
-            }
-        })
-        .build()
+    private fun openDatabase(): AppDatabase = DatabaseModule.build(context, databaseName)
 
     private fun image(
         mediaId: Long,
