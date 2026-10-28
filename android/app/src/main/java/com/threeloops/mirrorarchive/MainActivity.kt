@@ -47,6 +47,7 @@ import com.threeloops.mirrorarchive.ui.albums.AlbumsViewModel
 import com.threeloops.mirrorarchive.ui.auth.AuthScreen
 import com.threeloops.mirrorarchive.ui.dupes.DuplicateGroupDetailScreen
 import com.threeloops.mirrorarchive.ui.dupes.DuplicatesScreen
+import com.threeloops.mirrorarchive.ui.export.ExportScreen
 import com.threeloops.mirrorarchive.ui.imagedetail.ImageDetailScreen
 import com.threeloops.mirrorarchive.ui.metrics.MetricsScreen
 import com.threeloops.mirrorarchive.ui.ledger.RaseedLedgerScreen
@@ -220,6 +221,9 @@ fun MainNavigationApp(
                     },
                     onNavigateSettings = {
                         navController.navigate(Routes.SETTINGS)
+                    },
+                    onNavigateExport = {
+                        navController.navigate(Routes.export())
                     }
                 )
             }
@@ -345,6 +349,25 @@ fun MainNavigationApp(
                 )
                 ImageDetailScreen(
                     image = imageItem,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Routes.EXPORT,
+                arguments = listOf(
+                    navArgument("ids") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                )
+            ) { backStackEntry ->
+                val ids = backStackEntry.arguments?.getString("ids")
+                    .orEmpty()
+                    .split(',')
+                    .mapNotNull(String::toLongOrNull)
+                ExportScreen(
+                    initialIds = ids,
                     onBackClick = { navController.popBackStack() }
                 )
             }

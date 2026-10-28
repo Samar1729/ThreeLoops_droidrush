@@ -42,6 +42,7 @@ fun AlbumsScreen(
     onNavigateDuplicates: () -> Unit,
     onNavigateStorageSaver: () -> Unit,
     onNavigateSettings: () -> Unit = {},
+    onNavigateExport: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showNitiSandbox by remember { mutableStateOf(false) }
