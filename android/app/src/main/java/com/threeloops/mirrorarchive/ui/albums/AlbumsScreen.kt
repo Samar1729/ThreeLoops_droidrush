@@ -41,6 +41,7 @@ fun AlbumsScreen(
     onNavigateDuplicates: () -> Unit,
     onNavigateStorageSaver: () -> Unit,
     onNavigateSettings: () -> Unit = {},
+    onNavigateExport: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showNitiSandbox by remember { mutableStateOf(false) }
@@ -85,6 +86,10 @@ fun AlbumsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    TextButton(onClick = onNavigateExport) {
+                        Text("Export", color = Color.White, fontSize = 12.sp)
+                    }
+
                     // Ultra-subtle monospace telemetry badge
                     Box(
                         modifier = Modifier
