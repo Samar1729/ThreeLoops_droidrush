@@ -32,9 +32,12 @@ class PurgeViewModel @Inject constructor(
      */
     fun createRequest(plan: PurgePlan): IntentSender {
         val verifiedPlan = planner.verify(plan)
-        this.pendingPlan = verifiedPlan
-        
+        require(verifiedPlan.deleteUris.isNotEmpty()) {
+            "None of the selected photos are available to delete."
+        }
         val pendingIntent = MediaStore.createDeleteRequest(context.contentResolver, verifiedPlan.deleteUris)
+        this.pendingPlan = verifiedPlan
+        _state.value = PurgeUiState.Idle
         return pendingIntent.intentSender
     }
 
@@ -60,18 +63,27 @@ class PurgeViewModel @Inject constructor(
      * Called from the UI layer when ActivityResultLauncher returns.
      */
     fun onResult(resultCode: Int) {
-        if (resultCode == RESULT_OK) {
-            pendingPlan?.let { plan ->
-                viewModelScope.launch {
-                    repository.deleteRows(plan.deleteIds)
-                    _state.value = PurgeUiState.Done(
-                        deletedCount = plan.deleteIds.size,
-                        freedBytes = plan.bytesFreed
-                    )
-                }
+        val plan = pendingPlan
+        pendingPlan = null
+        if (resultCode != RESULT_OK || plan == null) {
+            _state.value = PurgeUiState.Idle
+            return
+        }
+
+        viewModelScope.launch {
+            _state.value = PurgeUiState.Purging
+            try {
+                repository.deleteRows(plan.deleteIds)
+                _state.value = PurgeUiState.Done(
+                    deletedCount = plan.deleteIds.size,
+                    freedBytes = plan.bytesFreed
+                )
+            } catch (exception: Exception) {
+                _state.value = PurgeUiState.Error(
+                    exception.message ?: "Purge failed"
+                )
             }
         }
-        pendingPlan = null
     }
 
     fun spaceFreeable(allGroups: List<DuplicateGroup>): Long {
