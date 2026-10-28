@@ -1,6 +1,6 @@
 # R-1 to R-4 implementation and verification notes
 
-## Implemented
+## Implemented..
 
 - **R-1 — MediaStore contracts and source:** `MediaRow` represents image `_ID`, URI, display/path metadata, dates, generation, dimensions, size, and MIME type. `MediaStoreDataSource` queries the external images collection, maps cursor rows, counts images, and creates row URIs. Queries handle denied access and other failures without crashing.
 - **R-2 — MediaStore paging and sync support:** `query(afterId, limit)` uses `_ID > ?`, `_ID ASC`, and a limit; `changedSince(generation)` filters `GENERATION_MODIFIED > ?`; `allIds()` returns ascending IDs; and `currentGeneration()` reads `MediaStore.getGeneration` for `VOLUME_EXTERNAL`.
