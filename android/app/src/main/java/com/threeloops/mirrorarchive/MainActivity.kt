@@ -418,7 +418,7 @@ private fun ScanProgressBanner(progress: ScanProgress) {
         ScanPhase.PAUSED -> "Indexing paused · ${progress.done} / ${progress.total}"
         ScanPhase.FAILED -> "Indexing failed · ${progress.done} / ${progress.total}"
         ScanPhase.COMPLETE -> "Indexing complete · ${progress.done} / ${progress.total}"
-        ScanPhase.SYNCING -> "Updating photo library · ${progress.done} / ${progress.total}"
+        ScanPhase.SYNCING -> "Syncing new photos..."
     }
     Surface(color = Color(0xFF18181B), modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {

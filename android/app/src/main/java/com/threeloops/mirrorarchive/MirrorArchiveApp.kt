@@ -10,12 +10,20 @@ import coil.ImageLoaderFactory
 import coil.intercept.Interceptor
 import coil.request.ErrorResult
 import com.threeloops.mirrorarchive.data.db.AppDatabase
+import com.threeloops.mirrorarchive.contracts.ScanPhase
+import com.threeloops.mirrorarchive.permissions.PermissionManager
+import com.threeloops.mirrorarchive.permissions.PermissionState
 import com.threeloops.mirrorarchive.work.IndexPipeline
+import com.threeloops.mirrorarchive.work.MediaObserver
+import com.threeloops.mirrorarchive.work.SyncUseCase
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
 
 /**
@@ -36,6 +44,15 @@ class MirrorArchiveApp : Application(), Configuration.Provider, ImageLoaderFacto
 
     @Inject
     lateinit var appDatabase: AppDatabase
+
+    @Inject
+    lateinit var permissionManager: PermissionManager
+
+    @Inject
+    lateinit var mediaObserver: MediaObserver
+
+    @Inject
+    lateinit var syncUseCase: SyncUseCase
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -80,6 +97,25 @@ class MirrorArchiveApp : Application(), Configuration.Provider, ImageLoaderFacto
             try {
                 indexPipeline.warmUp()
             } catch (ignored: Throwable) {}
+
+            var startupSyncTriggered = false
+            combine(
+                permissionManager.stateFlow().onStart { emit(permissionManager.state()) },
+                appDatabase.scanStateDao().observe()
+            ) { permission, scanState -> permission to scanState }
+                .collect { (permission, scanState) ->
+                    val ready = permission == PermissionState.GRANTED_FULL &&
+                        scanState?.phase == ScanPhase.COMPLETE
+                    if (ready) {
+                        mediaObserver.register()
+                        if (!startupSyncTriggered) {
+                            startupSyncTriggered = true
+                            syncUseCase.triggerNow()
+                        }
+                    } else {
+                        mediaObserver.unregister()
+                    }
+                }
         }
     }
 }

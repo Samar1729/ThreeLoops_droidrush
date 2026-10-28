@@ -13,6 +13,7 @@ import com.threeloops.mirrorarchive.settings.Settings
 import com.threeloops.mirrorarchive.settings.SettingsRepository
 import com.threeloops.mirrorarchive.metrics.ManifestAudit
 import com.threeloops.mirrorarchive.work.ScanController
+import com.threeloops.mirrorarchive.work.SyncUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +46,7 @@ class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
     private val database: AppDatabase,
     private val scanController: ScanController,
+    private val syncUseCase: SyncUseCase,
     private val manifestAudit: ManifestAudit,
     private val dbIntegrity: DbIntegrity,
     @ApplicationContext private val context: Context
@@ -79,7 +81,7 @@ class SettingsViewModel @Inject constructor(
 
     fun update(settings: Settings) = viewModelScope.launch { repository.update(settings) }
     fun resetDefaults() = update(Settings())
-    fun rescanNewPhotos() = scanController.start()
+    fun rescanNewPhotos() = syncUseCase.triggerNow()
     fun fullRescan() = scanController.rescan(full = true)
     fun clearIndex() = viewModelScope.launch { repository.clearIndex() }
 

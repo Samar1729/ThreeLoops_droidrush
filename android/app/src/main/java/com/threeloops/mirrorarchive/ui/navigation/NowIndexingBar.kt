@@ -78,7 +78,7 @@ fun NowIndexingBar(
                             text = when (progress.phase) {
                                 ScanPhase.SCANNING -> "Indexing Media"
                                 ScanPhase.QUEUED -> "Pipeline Queued"
-                                ScanPhase.SYNCING -> "Syncing MediaStore"
+                                ScanPhase.SYNCING -> "Syncing new photos..."
                                 ScanPhase.PAUSED -> "Indexing Paused"
                                 ScanPhase.FAILED -> "Scan Error"
                                 else -> "Idle"
