@@ -1,280 +1,284 @@
 package com.threeloops.mirrorarchive.ui.burst
 
-import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import android.content.ActivityNotFoundException
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.DeleteSweep
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.layout.ContentScale
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.threeloops.mirrorarchive.data.demo.DemoPhoto
-import com.threeloops.mirrorarchive.data.demo.DemoSeedData
+import com.threeloops.mirrorarchive.contracts.ImageItem
+import com.threeloops.mirrorarchive.contracts.displayName
+import com.threeloops.mirrorarchive.dupes.BurstSequence
+import com.threeloops.mirrorarchive.dupes.BurstUiState
+import com.threeloops.mirrorarchive.dupes.BurstViewModel
+import com.threeloops.mirrorarchive.dupes.PurgeUiState
+import com.threeloops.mirrorarchive.dupes.PurgeViewModel
 import com.threeloops.mirrorarchive.ui.theme.glass
-import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
+import java.text.DateFormat
+import java.util.Date
 
-data class BurstCandidate(
-    val demoPhoto: DemoPhoto,
-    val compositeScore: Float,
-    val sharpnessScore: Float,
-    val faceQualityScore: Float,
-    val isWinner: Boolean,
-    val rejectionReason: String?
-)
-
-data class BurstStack(
-    val stackId: Long,
-    val title: String,
-    val captureTimestamp: String,
-    val candidates: List<BurstCandidate>
-)
-
-/**
- * Feature C: "Pravah Smart Stacks" — Interactive Burst Best-Shot Arena.
- * Evaluates Composite Score = 0.55 * Sharpness + 0.45 * FaceQuality.
- */
 @Composable
 fun PravahSmartStacksView(
     onImageClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: BurstViewModel = hiltViewModel(),
+    purgeViewModel: PurgeViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    var inspectingPhoto by remember { mutableStateOf<DemoPhoto?>(null) }
-
-    val burstDemos = remember { DemoSeedData.burstPhotos }
-
-    var stacks by remember {
-        mutableStateOf(
-            listOf(
-                BurstStack(
-                    stackId = 1,
-                    title = "Action Burst Sequence (4 shots)",
-                    captureTimestamp = "Today, 17:42:10",
-                    candidates = listOf(
-                        BurstCandidate(
-                            demoPhoto = burstDemos[0], // Winner (Peak Jump)
-                            compositeScore = 94.6f,
-                            sharpnessScore = 96.0f,
-                            faceQualityScore = 93.0f,
-                            isWinner = true,
-                            rejectionReason = null
-                        ),
-                        BurstCandidate(
-                            demoPhoto = burstDemos[1], // Motion Blur
-                            compositeScore = 48.2f,
-                            sharpnessScore = 38.2f,
-                            faceQualityScore = 60.5f,
-                            isWinner = false,
-                            rejectionReason = "Drop • Blur 38.2"
-                        ),
-                        BurstCandidate(
-                            demoPhoto = burstDemos[2], // Eyes Blinked
-                            compositeScore = 42.1f,
-                            sharpnessScore = 72.0f,
-                            faceQualityScore = 14.0f,
-                            isWinner = false,
-                            rejectionReason = "Drop • Eyes 0.14"
-                        ),
-                        BurstCandidate(
-                            demoPhoto = burstDemos[3], // Sub-optimal Angle
-                            compositeScore = 58.4f,
-                            sharpnessScore = 64.0f,
-                            faceQualityScore = 52.0f,
-                            isWinner = false,
-                            rejectionReason = "Drop • Low Score"
-                        )
-                    )
-                )
-            )
-        )
+    val state by viewModel.state.collectAsState()
+    val purgeState by purgeViewModel.state.collectAsState()
+    var actionError by remember { mutableStateOf<String?>(null) }
+    val deleteRequestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        purgeViewModel.onResult(result.resultCode)
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 100.dp)
-    ) {
-        items(stacks, key = { it.stackId }) { stack ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .glass(
-                        shape = RoundedCornerShape(22.dp),
-                        backgroundColor = Color(0xDD141418),
-                        borderWidth = 1.dp,
-                        topBorderAlpha = 0.35f,
-                        bottomBorderAlpha = 0.08f
-                    )
-                    .padding(16.dp)
+    LaunchedEffect(purgeState) {
+        if (purgeState is PurgeUiState.Done) viewModel.scan()
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
+        actionError?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+        when (val currentState = state) {
+            BurstUiState.Loading -> Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stack.title,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Text(
-                                text = "${stack.captureTimestamp} • hamming(dHash) <= 8",
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = Color(0xFFA1A1AA)
-                            )
-                        }
+                CircularProgressIndicator()
+            }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+            is BurstUiState.Error -> Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(currentState.message, color = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = viewModel::scan) { Text("Retry") }
+            }
 
-                        // 1-Click "Keep Best & Purge Rest"
-                        Box(
-                            modifier = Modifier
-                                .glass(
-                                    shape = RoundedCornerShape(12.dp),
-                                    backgroundColor = Color(0x3310B981),
-                                    borderWidth = 1.dp,
-                                    topBorderAlpha = 0.40f
-                                )
-                                .clickable {
-                                    val winner = stack.candidates.first { it.isWinner }
-                                    Toast.makeText(
-                                        context,
-                                        "Kept Best Shot (${winner.demoPhoto.title}) and purged runner-ups",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    stacks = stacks.map {
-                                        if (it.stackId == stack.stackId) {
-                                            it.copy(candidates = listOf(winner))
-                                        } else it
-                                    }
-                                }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Outlined.DeleteSweep,
-                                    contentDescription = null,
-                                    tint = Color(0xFF10B981),
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "Purge Rest",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF10B981),
-                                    maxLines = 1
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Horizontal Cards for Burst Candidates
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        stack.candidates.forEach { candidate ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .glass(
-                                        shape = RoundedCornerShape(14.dp),
-                                        backgroundColor = if (candidate.isWinner) Color(0x1F10B981) else Color.White.copy(alpha = 0.04f),
-                                        borderWidth = if (candidate.isWinner) 2.dp else 1.dp,
-                                        topBorderAlpha = if (candidate.isWinner) 0.60f else 0.20f
+            is BurstUiState.Results -> if (currentState.bursts.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No burst sequences found.", color = Color(0xFFA1A1AA))
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 100.dp)
+                ) {
+                    items(currentState.bursts, key = { it.id }) { burst ->
+                        BurstSequenceCard(
+                            burst = burst,
+                            isPurging = purgeState is PurgeUiState.Purging,
+                            onImageClick = onImageClick,
+                            onKeepBest = {
+                                actionError = null
+                                try {
+                                    val plan = viewModel.keepBestPurgeRest(burst.imageIds)
+                                    val intentSender = purgeViewModel.createRequest(plan)
+                                    deleteRequestLauncher.launch(
+                                        IntentSenderRequest.Builder(intentSender).build()
                                     )
-                                    .clickable { inspectingPhoto = candidate.demoPhoto }
-                                    .padding(6.dp)
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    // Visual Canvas Card
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(84.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                    ) {
-                                        AsyncImage(
-                                            model = if (candidate.demoPhoto.drawableRes != 0) candidate.demoPhoto.drawableRes else candidate.demoPhoto.imageUrl,
-                                            contentDescription = candidate.demoPhoto.title,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-
-                                        if (candidate.isWinner) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .align(Alignment.TopEnd)
-                                                    .padding(4.dp)
-                                                    .background(Color(0xFF10B981), CircleShape)
-                                                    .padding(3.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.Check,
-                                                    contentDescription = "Best",
-                                                    tint = Color.Black,
-                                                    modifier = Modifier.size(10.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(6.dp))
-
-                                    // Math Badge
-                                    Text(
-                                        text = if (candidate.isWinner) "★ 95 pts" else "${candidate.compositeScore.toInt()} pts",
-                                        fontSize = 11.sp,
-                                        fontFamily = FontFamily.Monospace,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (candidate.isWinner) Color(0xFF10B981) else Color.White
-                                    )
-
-                                    Text(
-                                        text = candidate.rejectionReason ?: "Best Shot",
-                                        fontSize = 9.sp,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = if (candidate.isWinner) Color(0xFF10B981) else Color(0xFFEF4444),
-                                        maxLines = 1
-                                    )
+                                } catch (exception: IllegalArgumentException) {
+                                    actionError = exception.message
+                                        ?: "Unable to request photo deletion."
+                                } catch (exception: SecurityException) {
+                                    actionError = exception.message
+                                        ?: "Photo deletion permission is unavailable."
+                                } catch (exception: ActivityNotFoundException) {
+                                    actionError = exception.message
+                                        ?: "Unable to request photo deletion."
                                 }
                             }
-                        }
+                        )
                     }
                 }
             }
         }
+        when (val result = purgeState) {
+            is PurgeUiState.Done -> Text(
+                text = "Deleted ${result.deletedCount} photos · Freed ${formatSize(result.freedBytes)}",
+                color = Color(0xFF10B981),
+                modifier = Modifier.padding(16.dp)
+            )
+            is PurgeUiState.Error -> Text(
+                text = result.message,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(16.dp)
+            )
+            else -> Unit
+        }
     }
+}
 
-    if (inspectingPhoto != null) {
-        DrishtiXRayBottomSheet(
-            photo = inspectingPhoto,
-            onDismiss = { inspectingPhoto = null }
+@Composable
+private fun BurstSequenceCard(
+    burst: BurstSequence,
+    isPurging: Boolean,
+    onImageClick: (Long) -> Unit,
+    onKeepBest: () -> Unit
+) {
+    val captureTime = burst.imageIds.firstNotNullOfOrNull { burst.imageMap[it]?.dateTaken }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .glass(
+                shape = RoundedCornerShape(22.dp),
+                backgroundColor = Color(0xDD141418),
+                borderWidth = 1.dp,
+                topBorderAlpha = 0.35f,
+                bottomBorderAlpha = 0.08f
+            )
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Burst sequence · ${burst.imageIds.size} photos",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        captureTime?.let {
+            Text(
+                text = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+                    .format(Date(it)),
+                fontSize = 11.sp,
+                color = Color(0xFFA1A1AA)
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(burst.imageIds, key = { it }) { id ->
+                burst.imageMap[id]?.let { image ->
+                    BurstPhoto(
+                        image = image,
+                        isWinner = id == burst.bestId,
+                        onClick = { onImageClick(id) }
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = onKeepBest,
+            enabled = !isPurging,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black
+            ),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (isPurging) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.Black
+                )
+                Spacer(Modifier.width(8.dp))
+            } else {
+                Icon(Icons.Outlined.DeleteSweep, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(
+                text = "Keep Best & Purge ${burst.imageIds.size - 1} Others",
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun BurstPhoto(
+    image: ImageItem,
+    isWinner: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(132.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .glass(
+                shape = RoundedCornerShape(14.dp),
+                backgroundColor = if (isWinner) Color(0x3310B981) else Color(0x33141418),
+                borderWidth = if (isWinner) 2.dp else 1.dp,
+                topBorderAlpha = if (isWinner) 0.65f else 0.2f
+            )
+            .clickable(onClick = onClick)
+            .padding(6.dp)
+    ) {
+        AsyncImage(
+            model = image.uri,
+            contentDescription = if (isWinner) "Best shot" else image.displayName,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(112.dp)
+                .clip(RoundedCornerShape(10.dp))
+        )
+        Text(
+            text = if (isWinner) "BEST SHOT" else "Blur ${image.blurScore.toInt()}",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (isWinner) Color(0xFF10B981) else Color.White,
+            modifier = Modifier.padding(top = 6.dp, start = 2.dp, bottom = 2.dp)
         )
     }
 }
+
+private fun formatSize(bytes: Long): String =
+    "%.1f MB".format(bytes / (1024.0 * 1024.0))
