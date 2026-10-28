@@ -32,7 +32,7 @@
 - Hilt: **2.51.1**; Hilt Navigation Compose: **1.2.0**.
 - AndroidX Core KTX: **1.15.0**; Lifecycle: **2.8.7**; Activity Compose: **1.10.0**; Compose BOM: **2024.12.01** (Compose UI **1.7.6**, Material3 **1.3.1**); Navigation Compose: **2.8.5**; Biometric: **1.2.0-alpha05**.
 - Coil Compose: **2.7.0**; Room: **2.6.1**; WorkManager: **2.10.0**; DataStore Preferences: **1.1.2**.
-- SQLCipher Android: **4.6.1**; AndroidX SQLite: **2.4.0**.
+- SQLCipher Android artifact `net.zetetic:sqlcipher-android`: **4.17.0**; AndroidX SQLite: **2.6.2**.
 - Bundled ML Kit Image Labeling: **17.0.9**; Face Detection: **16.1.7**; Text Recognition: **16.0.1**; Coroutines Play Services: **1.9.0**.
 - JUnit: **4.13.2**; AndroidX JUnit: **1.2.1**; Espresso: **3.6.1**; Coroutines Test: **1.9.0**.
 
@@ -87,3 +87,45 @@ No contract change requests identified. Frozen signatures remain unchanged; any 
 - `./gradlew connectedDebugAndroidTest` — **NOT RUN**: Gradle built the instrumentation APK, then reported `No connected devices!` at `:app:connectedDebugAndroidTest`. The three worker integration cases and existing instrumentation tests still need execution on an emulator/device.
 - The fake-source completion test scans 1,000 rows; cancellation/resume and corrupt-row checkpoint cases are included in `IndexWorkerInstrumentedTest` but are not claimed as passing until run on a device.
 - Manual 1,000-photo gallery, force-stop/resume, and mid-scan permission-revoke checks remain device validation items.
+
+## R-8 to R-11 implementation and wrap-up
+
+### Implemented
+
+- **R-8 — Settings and About:** DataStore-backed thresholds clamp to the supported dHash/pHash, blur, and label-confidence ranges. Settings reports the live indexed count, database size, and scan phase; can reset thresholds, schedule incremental/full scans, and clear the derived index after confirmation. Clearing cancels scan work and resets images, skipped rows, pipeline stats, and the checkpoint in one Room transaction. The About section lists the app libraries, AI coding-assistant disclosure, and on-device/no-analytics privacy statement.
+- **R-9 — Pipeline metrics:** The recorder stores per-run stage totals and counts, image totals, and peak heap; workers record database batch time and partial runs. Metrics show throughput, stage time, database size, memory, manifest-derived network permission, and the comparison/reclaim/search inbox values when populated. `ManifestAudit` derives the INTERNET status from package metadata.
+- **R-10 — Encrypted database and recovery:** Room uses SQLCipher Android with artifact `net.zetetic:sqlcipher-android:4.17.0` and `net.zetetic.database.sqlcipher.SupportOpenHelperFactory`. The 32-byte SQLCipher passphrase is wrapped by a non-exportable Android Keystore AES-256-GCM key and stored atomically in `noBackupFilesDir/db.key`. Loss or rejection of the key deletes the derived database and sidecars, rebuilds an empty encrypted database, resets the checkpoint, schedules a scan, and posts a one-time recovery snackbar. The debug Settings action simulates key loss; `DbIntegrity` checks whether plain Android SQLite can read `sqlite_master`.
+- **R-11 — Incremental sync:** `IncrementalSyncWorker` pages new MediaStore IDs in groups of 50, merges changed older rows by MediaStore ID, and reuses the shared image pipeline with concurrency 3. It only advances the ID checkpoint and generation baseline after saved batches; reconciliation deletes missing rows in chunks of 500 only when MediaStore ID enumeration succeeds and full photo permission is granted. `MediaObserver` debounces changes by two seconds. Settings and Albums enqueue incremental work, and the app registers the observer and performs one startup catch-up after a completed scan with full permission. Incremental work is held while a full/immediate scan is active.
+
+### Assumptions and limits
+
+- The image index is derived data; the user's photo files are never deleted. Keystore loss therefore resets the index and starts a re-index.
+- Partial photo access is an incomplete gallery. Incremental sync may index visible photos, but deletion reconciliation is deliberately skipped to preserve unselected indexed images.
+- The optional periodic content-URI-triggered WorkManager request is not enabled; foreground observation and the app-start catch-up are implemented.
+- The system gallery remains the authority for media IDs, generation, and deletion state. An unavailable/failed ID query is treated as inconclusive and never as an empty gallery.
+
+### Manual verification
+
+1. Change each threshold in Settings, leave and reopen the route, and confirm the values persist; use **Reset to defaults** to restore them.
+2. Run **Clear index**, confirm the dialog, and verify the index and checkpoint reset; then run a full rescan.
+3. Open Privacy / About and confirm **Network permission: none** and the library/disclosure list.
+4. Pull `mirror_archive.db` with `adb` after a scan and verify plain SQLite cannot read it. Settings should report `Database encrypted: yes (SQLCipher, Keystore-wrapped key)`.
+5. In a debug build, tap **Simulate key loss**; confirm the index resets, the one-time “Index was reset, re-scanning” snackbar appears, and a new scan starts.
+6. With full photo permission, take a photo while the app is open. Within a few seconds, confirm it appears in Albums and Search with its on-device ML Kit labels.
+7. Delete an indexed photo in the system gallery, wait for the debounced sync, and confirm it and its child index data disappear.
+
+### Current dependency versions
+
+- Gradle wrapper **9.8.2**; Android Gradle Plugin **8.7.2**; Kotlin **2.0.21**; compile/target SDK **35**, minimum SDK **30**.
+- Room **2.6.1**; AndroidX SQLite **2.6.2**; SQLCipher Android artifact `net.zetetic:sqlcipher-android:4.17.0` (official Android library artifact).
+- WorkManager **2.10.0**; DataStore Preferences **1.1.2**; Hilt **2.51.1**; Compose BOM **2024.12.01**; Coil **2.7.0**.
+- Bundled ML Kit Image Labeling **17.0.9**, Face Detection **16.1.7**, Text Recognition **16.0.1**.
+
+### R-11c verification run
+
+- `:app:assembleDebug` — **PASS**.
+- `:app:testDebugUnitTest` — **PASS**, 48 tests.
+- `:app:compileDebugAndroidTestKotlin` — **PASS**, including the five incremental sync and deletion cases.
+- `:app:connectedDebugAndroidTest` — **BLOCKED**: the instrumentation APK built, but Gradle reported `No connected devices!`; the instrumentation cases have not executed on a device.
+- Parsed `app/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml`: **no** `<uses-permission android:name="android.permission.INTERNET">` element. The manifest-merger report records dependency INTERNET requests as rejected by the app manifest.
+- Automatic photo arrival/deletion behavior, SQLCipher extraction, and simulated key-loss recovery remain manual device checks listed above.

@@ -168,5 +168,6 @@ class IndexPipelineTest {
             rows += entity
         }
         override fun count(): Flow<Int> = flowOf(rows.size)
+        override suspend fun deleteAll() { rows.clear() }
     }
 }
