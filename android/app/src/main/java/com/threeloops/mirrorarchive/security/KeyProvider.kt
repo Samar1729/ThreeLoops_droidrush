@@ -31,6 +31,20 @@ class KeyProvider(
     private var cachedPassphrase: ByteArray? = null
 
     @Synchronized
+    fun resetForRecovery() {
+        cachedPassphrase?.fill(0)
+        cachedPassphrase = null
+        File(keyFileDirectory, KEY_FILE_NAME).delete()
+        File(keyFileDirectory, "$KEY_FILE_NAME.tmp").delete()
+        try {
+            val keyStore = KeyStore.getInstance(keystoreProviderName).apply { load(null) }
+            if (keyStore.containsAlias(alias)) keyStore.deleteEntry(alias)
+        } catch (error: Exception) {
+            throw KeyLossException("Could not clear the database wrapping key", error)
+        }
+    }
+
+    @Synchronized
     fun getPassphrase(): ByteArray {
         cachedPassphrase?.let {
             if (!File(keyFileDirectory, KEY_FILE_NAME).isFile) {

@@ -9,6 +9,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.intercept.Interceptor
 import coil.request.ErrorResult
+import com.threeloops.mirrorarchive.data.db.AppDatabase
 import com.threeloops.mirrorarchive.work.IndexPipeline
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,9 @@ class MirrorArchiveApp : Application(), Configuration.Provider, ImageLoaderFacto
 
     @Inject
     lateinit var indexPipeline: IndexPipeline
+
+    @Inject
+    lateinit var appDatabase: AppDatabase
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -67,6 +71,12 @@ class MirrorArchiveApp : Application(), Configuration.Provider, ImageLoaderFacto
     override fun onCreate() {
         super.onCreate()
         applicationScope.launch {
+            try {
+                appDatabase.openHelper.writableDatabase
+            } catch (ignored: Throwable) {
+                // Database recovery is handled by the SQLCipher open helper when the error
+                // indicates a missing key or a rejected database passphrase.
+            }
             try {
                 indexPipeline.warmUp()
             } catch (ignored: Throwable) {}

@@ -250,6 +250,7 @@ private class FakeScanStateDao : ScanStateDao {
     val state = MutableStateFlow<ScanStateEntity?>(null)
     override fun observe(): Flow<ScanStateEntity?> = state
     override suspend fun upsert(state: ScanStateEntity) { this.state.value = state }
+    override suspend fun deletePipelineStats() = Unit
 }
 
 private class FakeSkippedDao : SkippedDao {
@@ -260,6 +261,10 @@ private class FakeSkippedDao : SkippedDao {
         count.value = rows.size
     }
     override fun count(): Flow<Int> = count
+    override suspend fun deleteAll() {
+        rows.clear()
+        count.value = 0
+    }
 }
 
 private class FakeThumbnailLoader : ThumbnailLoader {
