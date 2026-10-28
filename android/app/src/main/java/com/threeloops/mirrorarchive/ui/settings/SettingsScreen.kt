@@ -43,6 +43,7 @@ import java.util.Locale
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
+    onNavigateMetrics: () -> Unit,
     viewModel: SettingsViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -73,7 +74,16 @@ fun SettingsScreen(
                     onClear = { showClearConfirmation = true }
                 )
                 Spacer(Modifier.height(14.dp))
-                AboutSection(current.appInfo.versionName, current.appInfo.libraries, current.appInfo.privacyStatement)
+                OutlinedButton(onClick = onNavigateMetrics, modifier = Modifier.fillMaxWidth()) {
+                    Text("View performance metrics")
+                }
+                Spacer(Modifier.height(14.dp))
+                AboutSection(
+                    current.appInfo.versionName,
+                    current.networkPermission,
+                    current.appInfo.libraries,
+                    current.appInfo.privacyStatement
+                )
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -149,10 +159,10 @@ private fun IndexSection(
 }
 
 @Composable
-private fun AboutSection(versionName: String, libraries: List<String>, privacy: String) {
+private fun AboutSection(versionName: String, networkPermission: String, libraries: List<String>, privacy: String) {
     SectionCard("Privacy / About") {
         InfoRow("Version", versionName)
-        InfoRow("Network permission", "None")
+        InfoRow("Network permission", networkPermission)
         InfoRow("Database encrypted", "Pending")
         Text("Libraries and disclosures", color = Color.White)
         libraries.forEach { Text("• $it", color = Color.LightGray, style = MaterialTheme.typography.bodySmall) }

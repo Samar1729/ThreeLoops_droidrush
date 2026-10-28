@@ -54,7 +54,7 @@ class MetricsRecorder @Inject constructor(
         }
     }
 
-    suspend inline fun <T> time(stage: Stage, crossinline block: suspend () -> T): T {
+    suspend inline fun <T> timeSuspend(stage: Stage, crossinline block: suspend () -> T): T {
         val started = System.nanoTime()
         try {
             return block()

@@ -13,6 +13,7 @@ import com.threeloops.mirrorarchive.data.mediastore.ThumbnailLoader
 import com.threeloops.mirrorarchive.data.repo.PIPELINE_VERSION
 import com.threeloops.mirrorarchive.hash.PerceptualHasher
 import com.threeloops.mirrorarchive.ml.ImageAnalyzer
+import com.threeloops.mirrorarchive.metrics.MetricsRecorder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -96,7 +97,7 @@ class IndexPipelineTest {
         analyzer: ImageAnalyzer,
         hasher: PerceptualHasher,
         skipped: SkippedDao
-    ) = IndexPipeline(loader, analyzer, hasher, skipped)
+    ) = IndexPipeline(loader, analyzer, hasher, skipped, Mockito.mock(MetricsRecorder::class.java))
 
     private fun mediaRow(): MediaRow {
         val uri = Mockito.mock(Uri::class.java)

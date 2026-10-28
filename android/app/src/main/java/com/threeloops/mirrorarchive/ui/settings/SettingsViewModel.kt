@@ -7,6 +7,7 @@ import com.threeloops.mirrorarchive.data.db.AppDatabase
 import com.threeloops.mirrorarchive.settings.AppInfo
 import com.threeloops.mirrorarchive.settings.Settings
 import com.threeloops.mirrorarchive.settings.SettingsRepository
+import com.threeloops.mirrorarchive.metrics.ManifestAudit
 import com.threeloops.mirrorarchive.work.ScanController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +25,8 @@ sealed interface SettingsUiState {
         val indexedCount: Int,
         val dbSizeBytes: Long,
         val scanProgress: ScanProgress,
-        val appInfo: AppInfo
+        val appInfo: AppInfo,
+        val networkPermission: String
     ) : SettingsUiState
     data class Error(val message: String) : SettingsUiState
 }
@@ -33,7 +35,8 @@ sealed interface SettingsUiState {
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository,
     database: AppDatabase,
-    private val scanController: ScanController
+    private val scanController: ScanController,
+    private val manifestAudit: ManifestAudit
 ) : ViewModel() {
     val uiState = combine(
         repository.settings(),
@@ -46,7 +49,8 @@ class SettingsViewModel @Inject constructor(
             indexedCount = count,
             dbSizeBytes = repository.dbSizeBytes(),
             scanProgress = progress,
-            appInfo = repository.appInfo()
+            appInfo = repository.appInfo(),
+            networkPermission = if (manifestAudit.hasInternetPermission()) "present" else "none"
         ) as SettingsUiState
     }.catch { error ->
         emit(SettingsUiState.Error(error.message ?: "Unable to load settings"))

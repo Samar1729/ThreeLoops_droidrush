@@ -375,13 +375,15 @@ fun MainNavigationApp(
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     onBackClick = { navController.popBackStack() },
+                    onNavigateMetrics = { navController.navigate(Routes.METRICS) },
                     viewModel = hiltViewModel()
                 )
             }
 
             composable(Routes.METRICS) {
                 MetricsScreen(
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    viewModel = hiltViewModel()
                 )
             }
             }

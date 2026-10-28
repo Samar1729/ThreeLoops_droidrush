@@ -20,6 +20,9 @@ import com.threeloops.mirrorarchive.data.db.ScanStateDao
 import com.threeloops.mirrorarchive.data.db.ScanStateEntity
 import com.threeloops.mirrorarchive.data.mediastore.MediaStoreSource
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
+import com.threeloops.mirrorarchive.metrics.MemoryProbe
+import com.threeloops.mirrorarchive.metrics.MetricsRecorder
+import com.threeloops.mirrorarchive.metrics.Stage
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
@@ -47,7 +50,9 @@ class IndexWorker @AssistedInject constructor(
     private val repository: ImageRepository,
     private val mediaStore: MediaStoreSource,
     private val pipeline: IndexPipeline,
-    private val scanStateDao: ScanStateDao
+    private val scanStateDao: ScanStateDao,
+    private val metricsRecorder: MetricsRecorder,
+    private val memoryProbe: MemoryProbe
 ) : CoroutineWorker(appContext, params) {
 
     private var currentCheckpoint = 0L
@@ -56,6 +61,7 @@ class IndexWorker @AssistedInject constructor(
     private val foregroundStarted = AtomicBoolean(false)
 
     override suspend fun doWork(): Result {
+        val metricsRunId = metricsRecorder.startRun()
         return try {
             ensureMediaPermission()
             currentCheckpoint = repository.lastProcessedId()
@@ -87,7 +93,12 @@ class IndexWorker @AssistedInject constructor(
                 }
 
                 currentCheckpoint = rows.last().mediaId
-                repository.saveBatch(results.filterNotNull(), checkpointId = currentCheckpoint)
+                val indexed = results.filterNotNull()
+                metricsRecorder.timeSuspend(Stage.DB) {
+                    repository.saveBatch(indexed, checkpointId = currentCheckpoint)
+                }
+                metricsRecorder.recordImage(indexed.size.toLong())
+                memoryProbe.sample()
                 currentDone += rows.size
                 // Repository increments this for stored rows; worker owns source-row progress,
                 // which also includes images intentionally skipped by the pipeline.
@@ -123,6 +134,10 @@ class IndexWorker @AssistedInject constructor(
                 persistTerminalState(ScanPhase.PAUSED)
             }
             if (isStopped) Result.retry() else throw e
+        } finally {
+            withContext(NonCancellable + Dispatchers.IO) {
+                metricsRecorder.finishRun(metricsRunId)
+            }
         }
     }
 
