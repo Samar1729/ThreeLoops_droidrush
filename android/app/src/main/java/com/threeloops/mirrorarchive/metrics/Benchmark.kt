@@ -123,3 +123,4 @@ object Benchmark {
         return buffer
     }
 }
+

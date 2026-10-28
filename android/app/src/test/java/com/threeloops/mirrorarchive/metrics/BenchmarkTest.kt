@@ -21,3 +21,4 @@ class BenchmarkTest {
         assertTrue("Synthetic grayscale benchmark must return positive rate, got $throughput img/s", throughput > 0.0)
     }
 }
+
