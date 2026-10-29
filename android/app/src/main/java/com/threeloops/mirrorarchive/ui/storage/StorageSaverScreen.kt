@@ -1,5 +1,6 @@
 package com.threeloops.mirrorarchive.ui.storage
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +43,7 @@ fun StorageSaverScreen(
     val currentThreshold by viewModel.threshold.collectAsState()
     val lowBlurImages by viewModel.lowBlurImages.collectAsState()
     val reclaimableBytes by viewModel.reclaimableBytes.collectAsState()
+    val context = LocalContext.current
 
     val sampleBlurry = remember {
         listOf(
@@ -163,6 +166,33 @@ fun StorageSaverScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                if (displayImages.isNotEmpty()) {
+                    Button(
+                        onClick = {
+                            viewModel.purgeLowBlur(displayImages) {
+                                Toast.makeText(context, "Cleaned ${displayImages.size} blurry photos", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = "Clean All Flagged (${"%.1f".format(totalBytes / (1024.0 * 1024.0))} MB)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
 
                 // Grid of Blurry Photos
                 LazyVerticalGrid(
