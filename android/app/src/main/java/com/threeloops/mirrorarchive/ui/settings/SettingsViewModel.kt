@@ -83,7 +83,10 @@ class SettingsViewModel @Inject constructor(
     fun resetDefaults() = update(Settings())
     fun rescanNewPhotos() = syncUseCase.triggerNow()
     fun fullRescan() = scanController.rescan(full = true)
-    fun clearIndex() = viewModelScope.launch { repository.clearIndex() }
+    fun clearIndex() = viewModelScope.launch {
+        repository.clearIndex()
+        scanController.rescan(full = true)
+    }
 
     fun simulateKeyLoss() = viewModelScope.launch(Dispatchers.IO) {
         java.io.File(context.noBackupFilesDir, KeyProvider.KEY_FILE_NAME).delete()
