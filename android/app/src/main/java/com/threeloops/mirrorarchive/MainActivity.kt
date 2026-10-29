@@ -322,6 +322,9 @@ fun MainNavigationApp(
                     onBackClick = { navController.popBackStack() },
                     onImageClick = { imageId ->
                         navController.navigate(Routes.imageDetail(imageId))
+                    },
+                    onExportClick = { ids ->
+                        navController.navigate(Routes.export(ids))
                     }
                 )
             }
