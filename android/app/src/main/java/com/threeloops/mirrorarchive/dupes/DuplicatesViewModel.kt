@@ -11,6 +11,7 @@ import com.threeloops.mirrorarchive.data.db.AppDatabase
 import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
 import com.threeloops.mirrorarchive.data.demo.SampleMediaSeed
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
+import com.threeloops.mirrorarchive.metrics.MetricsInbox
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -150,6 +151,11 @@ class DuplicatesViewModel @Inject constructor(
                 val allIds = result.groups.flatMap { it.imageIds }.distinct()
                 val items = repository.items(allIds)
                 val imageMap = items.associateBy { it.id }
+
+                val nonBestIds = result.groups.flatMap { g -> g.imageIds.filter { it != g.bestId } }
+                val reclaimableBytes = nonBestIds.sumOf { imageMap[it]?.sizeBytes ?: 0L }
+                MetricsInbox.setComparisonStats(result.stats.naivePairs, result.stats.bucketedPairs)
+                MetricsInbox.setReclaimableBytes(reclaimableBytes)
 
                 _state.value = DuplicatesUiState.Results(
                     groups = result.groups,
