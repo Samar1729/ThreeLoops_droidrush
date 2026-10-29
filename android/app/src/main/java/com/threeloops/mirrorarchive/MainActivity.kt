@@ -334,21 +334,8 @@ fun MainNavigationApp(
             ) { backStackEntry ->
                 val imageIdStr = backStackEntry.arguments?.getString("imageId") ?: "1"
                 val imageId = imageIdStr.toLongOrNull() ?: 1L
-                val albumsViewModel: AlbumsViewModel = hiltViewModel()
-                val imageItem = albumsViewModel.getImage(imageId) ?: ImageItem(
-                    id = imageId,
-                    mediaId = 100L + imageId,
-                    uri = "content://media/external/images/media/${100L + imageId}",
-                    dateAdded = System.currentTimeMillis() / 1000,
-                    dateTaken = System.currentTimeMillis(),
-                    sizeBytes = 2_800_000L,
-                    width = 1920,
-                    height = 1080,
-                    blurScore = 120.0,
-                    faceCount = 1
-                )
                 ImageDetailScreen(
-                    image = imageItem,
+                    imageId = imageId,
                     onBackClick = { navController.popBackStack() }
                 )
             }

@@ -26,19 +26,33 @@ import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayContent
 
 @Composable
 fun ImageDetailScreen(
-    image: ImageItem,
+    imageId: Long,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ImageDetailViewModel = hiltViewModel()
 ) {
+    val loadedImage by viewModel.image.collectAsStateWithLifecycle()
     val faces by viewModel.faces.collectAsStateWithLifecycle()
     val ocrText by viewModel.ocrText.collectAsStateWithLifecycle()
     val labels by viewModel.labels.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(image.id) {
-        viewModel.loadTelemetry(image.id)
+    LaunchedEffect(imageId) {
+        viewModel.loadTelemetry(imageId)
     }
+
+    val image = loadedImage ?: ImageItem(
+        id = imageId,
+        mediaId = imageId,
+        uri = "content://media/external/images/media/$imageId",
+        dateAdded = System.currentTimeMillis() / 1000,
+        dateTaken = System.currentTimeMillis(),
+        sizeBytes = 2_800_000L,
+        width = 1920,
+        height = 1080,
+        blurScore = 120.0,
+        faceCount = faces.size
+    )
 
     AmbientMeshBox {
         Column(modifier = modifier.fillMaxSize()) {
@@ -103,4 +117,19 @@ fun ImageDetailScreen(
             }
         }
     }
+}
+
+@Composable
+fun ImageDetailScreen(
+    image: ImageItem,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ImageDetailViewModel = hiltViewModel()
+) {
+    ImageDetailScreen(
+        imageId = image.id,
+        onBackClick = onBackClick,
+        modifier = modifier,
+        viewModel = viewModel
+    )
 }
