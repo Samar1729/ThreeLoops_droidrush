@@ -1,5 +1,8 @@
 package com.threeloops.mirrorarchive.ui.dupes
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -54,6 +57,18 @@ fun DuplicateGroupDetailScreen(
 ) {
     val uiState by duplicatesViewModel.state.collectAsState()
     val purgeState by purgeViewModel.state.collectAsState()
+
+    val deleteRequestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        purgeViewModel.onResult(result.resultCode)
+    }
+
+    LaunchedEffect(purgeState) {
+        if (purgeState is PurgeUiState.Done) {
+            duplicatesViewModel.scan()
+        }
+    }
 
     val (group, imageMap) = remember(uiState, groupId) {
         when (val state = uiState) {
@@ -254,7 +269,14 @@ fun DuplicateGroupDetailScreen(
                 when (purgeState) {
                     is PurgeUiState.Idle -> {
                         Button(
-                            onClick = { purgeViewModel.executePurge(plan) },
+                            onClick = {
+                                try {
+                                    val intentSender = purgeViewModel.createRequest(plan)
+                                    deleteRequestLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+                                } catch (_: Exception) {
+                                    purgeViewModel.executePurge(plan)
+                                }
+                            },
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.White,
