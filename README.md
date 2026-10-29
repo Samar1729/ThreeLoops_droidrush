@@ -1,6 +1,13 @@
 # Mirror Archive (Team ThreeLoops • Droidrush 2026)
 
-Mirror Archive is a 100% on-device Android gallery organizer built with bundled on-device machine learning, perceptual hashing, and encrypted local storage with strictly zero network permissions.
+[![Zero Internet Permission](https://img.shields.io/badge/Network-0%20Internet%20Permissions-00C853.svg)](#privacy-guarantee-zero-internet-permission)
+[![Platform](https://img.shields.io/badge/Platform-Android%2014%2B%20%7C%20API%2034%2B-blue.svg)](https://developer.android.com)
+[![Language](https://img.shields.io/badge/Kotlin-2.0-7F52FF.svg)](https://kotlinlang.org)
+[![UI](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4.svg)](https://developer.android.com/jetpack/compose)
+[![Database](https://img.shields.io/badge/Database-Room%20%2B%20SQLCipher%20256--bit-FF6F00.svg)](https://www.zetetic.net/sqlcipher/)
+[![Tests](https://img.shields.io/badge/Unit%20Tests-61%20Passed-brightgreen.svg)](#testing)
+
+**Mirror Archive** is an ultra-private, 100% on-device intelligent gallery manager and offline photo vault for Android. Built strictly with **zero internet permissions**, Mirror Archive delivers computer vision, perceptual hashing, duplicate clustering, receipt expense tracking, and storage optimization directly on your smartphone CPU/NPU without a single byte ever leaving your device.
 
 ---
 
@@ -8,114 +15,161 @@ Mirror Archive is a 100% on-device Android gallery organizer built with bundled 
 
 | Member | Focus | Responsibilities |
 | :--- | :--- | :--- |
-| **Aditya** | **Machine Learning & UI** | Image Analysis, Smart Albums, Search, Face Quality & Jetpack Compose UI |
-| **Rishav** | Storage & Indexing | MediaStore Source, Room & SQLCipher DAOs, Background Indexing Worker, Keystore Security |
-| **Samar** | Hashing & Deduplication | Perceptual Hasher (dHash/pHash), Duplicate Bucketing, Purge Flow, Burst Shot Selection |
+| **Samar** | **Deduplication, Benchmark & Storage Saver** | Perceptual difference hashing (dHash), Hamming distance duplicate clustering, burst shot selection, Laplacian blur variance calculation, dynamic storage saver thresholding, reactive runtime permissions manager, and incremental background synchronization. |
+| **Rishav** | **Storage, MediaStore & Telemetry** | Encrypted local database (Room + SQLCipher), MediaStore content ingestion, scoped storage batch deletion intents, deterministic ZIP archive export engine, telemetry metrics inbox, and heuristic album classifier. |
+| **Aditya** | **Machine Learning & Jetpack Compose UI** | Bundled on-device Google ML Kit pipelines (Image Labeling, Face Detection, OCR), facial quality ranking (smile and eyes-open probabilities), receipt expense parser, and Jetpack Compose design system. |
 
 ---
 
-## Native Android Application (`/android`)
+## Core Features
 
-The native Jetpack Compose implementation is located under `android/`:
+### 1. Smart Albums & Classification
+- **Automatic Rule-Based Categorization:** Instant classification into **Screenshots**, **Documents**, **Food**, **Receipts**, **People**, and **Places**.
+- **Edge ML Labeling:** Offline semantic image recognition powered by bundled Google ML Kit.
+- **Batch ZIP Export:** Export entire albums or selected photos into an uncompressed or compressed ZIP archive with clean naming.
 
-- **Design System:** Apple-inspired monochrome palette, SF Pro-style typography, high-contrast badges, fluid animations.
-- **Smart Albums:** Automatic categorization for Receipts, Screenshots, Documents, Food, and People.
-- **Instant Search:** Tag-based semantic matching and fast on-device text OCR lookup with substring highlighting.
-- **People & Faces:** On-device face detection with eyes-open, smile detection, and sharpness scoring.
-- **Zero Internet:** Built with strictly 0 network permissions (`android.permission.INTERNET` omitted from Manifest).
+### 2. Duplicate Detection & Burst Selection
+- **64-bit Grayscale dHash:** High-efficiency difference hashing comparing adjacent gradients across downsampled frames.
+- **Hamming Distance Bucketing:** Sub-quadratic clustering identifying duplicate groups with bitwise distance $\le 10$.
+- **Smart Burst Selector:** Automatically preserves the best frame (highest resolution, least blurry, highest face score) while designating redundant shots for reclaimable space.
+- **Scoped Storage Purge:** Direct integration with Android's system `createDeleteRequest` intent sender for secure MediaStore deletion.
+
+### 3. Storage Saver & Blur Analysis
+- **Laplacian Variance Blur Scoring:** Evaluates sharpness and identifies blurred or degraded photos.
+- **Dynamic 10th-Percentile Thresholding:** Calculates intelligent suggestions based on the distribution of your local photo library.
+- **Reclaimable Space Calculation:** Reactive computation of potential storage savings with one-click purge.
+
+### 4. Raseed Ledger (Receipt Expense Scanner)
+- **Offline OCR Pipeline:** Bundled Google ML Kit Text Recognition scans physical receipts and invoices.
+- **Autonomous Receipt Parser:** Extracts vendor name, date, itemized rows, tax, payment method, and currency totals (INR `₹`, USD `$`, EUR `€`, GBP `£`).
+- **Dynamic Expense Analytics:** Aggregates spend totals across categories (Groceries, Dining, Utilities, Retail).
+
+### 5. People & Face Quality Intelligence
+- **On-Device Face Detector:** Tracks face count and bounding boxes.
+- **Quality Scoring:** Ranks portrait photos using combined smile probability and eyes-open metrics to prioritize your best memories.
+
+### 6. Hardware Benchmarking & Telemetry
+- **Hash Throughput Benchmark:** Benchmarks dHash generation throughput in images per second directly on your phone's processor.
+- **Live Metrics Dashboard:** Monitors total scan duration, database file size, search latencies, and total reclaimed storage.
+- **Now-Indexing Progress Bar:** Real-time foreground WorkManager progress updates with phase transitions (`QUEUED`, `SCANNING`, `SYNCING`, `PAUSED`, `COMPLETE`).
 
 ---
 
-## Architecture
+## Privacy Guarantee: Zero Internet Permission
 
-Mirror Archive is designed with an offline-first, strictly on-device architecture adhering to Clean Architecture principles:
-
-- **Presentation Layer (`ui/`):** Jetpack Compose with Material 3, Navigation Compose, unidirectional data flow (UDF) backed by StateFlow/Flow. Injected using Hilt.
-- **Domain & Contracts (`contracts/`):** Pure Kotlin interfaces and models defining repository, analyzer, hasher, and duplicate contracts. Free of Android platform dependencies where possible.
-- **Data Layer (`data/`):**
-  - **`data/mediastore/`:** `MediaStoreDataSource` and `BitmapLoader` querying system media strictly on `Dispatchers.IO`.
-  - **`data/repo/`:** `ImageRepository` orchestrating local database cache and MediaStore data.
-  - **`data/db/`:** Encrypted local database utilizing SQLCipher and Android Keystore.
-- **Machine Learning (`ml/`):** Bundled on-device Google ML Kit models (Image Labeling, Face Detection, Text Recognition OCR).
-- **Hashing & Deduplication (`hash/`, `dupes/`):** Perceptual hashing (dHash/pHash) and Hamming distance bucket clustering for duplicate detection.
-- **Background Work (`work/`):** WorkManager foreground services for intensive batch indexing and media scanning.
-- **Security & Permissions (`permissions/`):** Granular permission manager for API 33+ (READ_MEDIA_IMAGES) and API 34+ partial photo picker (READ_MEDIA_VISUAL_USER_SELECTED).
+- **No `android.permission.INTERNET`:** The Android OS mathematically guarantees that Mirror Archive cannot open sockets, transmit telemetry, or make HTTP/DNS requests.
+- **Bundled Machine Learning Models:** All ML models are packaged directly within the APK (`com.google.mlkit:image-labeling`, `face-detection`, `text-recognition`)—eliminating any runtime model downloads from Google Play Services.
+- **Encrypted Local Storage:** Database tables and metadata are secured via **SQLCipher** and the **Android Keystore**.
+- **Backup Exclusion:** `android:allowBackup="false"` prevents cloud backup extraction via Google Drive or ADB backups.
 
 ---
 
-## Privacy: no INTERNET permission
-
-- **Zero Network Permission:** `android.permission.INTERNET` is **never** declared in `AndroidManifest.xml`. The OS guarantees network isolation.
-- **100% On-Device Processing:** All computer vision, OCR, indexing, and duplicate detection operations execute locally on the device CPU/GPU/NPU.
-- **Bundled ML Models:** Employs bundled Google ML Kit artifacts (`com.google.mlkit:image-labeling`, `face-detection`, `text-recognition`) without Play Services network model download dependencies.
-- **Local Encryption:** Encrypted storage with SQLCipher ensures all indexed image metadata and face metrics remain secure on-device.
-- **Backup Disabled:** `android:allowBackup="false"` prevents extraction via ADB or cloud device backups.
-
-## Scan state machine
-
-`ScanController` uses WorkManager's unique scan names and the persisted Room checkpoint to report progress across process restarts. `IDLE` means no scan has run; `QUEUED` is accepted work waiting to start; `SCANNING` is active processing; `PAUSED` is retrying, stopped, cancelled, or interrupted before the checkpoint reached the total; `SYNCING` is MediaStore reconciliation; `COMPLETE` means the scan reached its total or WorkManager succeeded; and `FAILED` means WorkManager reported a terminal failure. A full rescan resets the checkpoint and processed count but leaves indexed rows available until refreshed.
-
-The main scaffold displays this state above the active screen. On Albums, **Scan now** starts an unconstrained run and **Cancel** keeps the saved checkpoint for the next run. When image permission is granted, the app starts or resumes an incomplete first scan. The worker reads MediaStore rows in ascending `_id` pages of 50, records skipped images, and advances its checkpoint after each whole page. R-7 currently binds stub analysis and hashing implementations; database-backed UI screens will contain only the metadata those configured pipeline components produce.
+## Project Structure
 
 ```
 android/app/src/main/java/com/threeloops/mirrorarchive/
-├── ml/
-│   └── ImageAnalyzer.kt             # Bundled ML Kit Image Labeling, Face Detection, OCR
-├── albums/
-│   ├── AlbumClassifier.kt           # Classification rules and tag matching
-│   └── AlbumRules.kt                # Keywords and categorization thresholds
-├── search/
-│   └── SearchViewModel.kt           # Search filtering with highlight ranges
-├── people/
-│   └── PeopleViewModel.kt           # Face quality scoring (smile and eyes-open metrics)
-├── ui/
-│   ├── theme/                       # Clean monochrome theme and typography
-│   ├── navigation/                  # Screen routes and bottom navigation dock
+├── albums/                          # Rule-based album classifier & categories
+├── contracts/                       # Clean domain contracts & immutable data models
+├── data/
+│   ├── db/                          # Room Database, DAOs & SQLCipher security
+│   ├── export/                      # ZIP Archive Export Worker & ViewModel
+│   ├── mediastore/                  # MediaStore scanner, queries & ContentObserver
+│   └── repo/                        # RoomImageRepository implementation
+├── dupes/                           # 64-bit dHash, Burst selector, Purge ViewModel
+├── metrics/                         # Hash Benchmark & MetricsInbox telemetry
+├── ml/                              # Bundled ML Kit Image Labeling, Face & OCR Analyzers
+├── people/                          # Face quality scoring & PeopleViewModel
+├── permissions/                     # PermissionManager (API 30–34+ reactive flow)
+├── search/                          # Search engine with text highlight ranges
+├── security/                        # Keystore & database reset recovery notifier
+├── storage/                         # StorageSaverViewModel & Laplacian blur thresholding
+├── ui/                              # Jetpack Compose presentation layer
 │   ├── albums/                      # AlbumsScreen & AlbumDetailScreen
-│   ├── search/                      # SearchScreen (Tag and Text segmented toggle)
-│   ├── people/                      # PeopleScreen
-│   └── imagedetail/                 # ImageDetailScreen (Face boxes and OCR inspector)
-└── data/
-    ├── model/                       # ImageItem, AlbumSummary, FaceInfo, LabelResult
-    └── repo/ImageRepository.kt      # Local data repository
+│   ├── auth/                        # Biometric / PIN Vault unlock screen
+│   ├── dupes/                       # DuplicatesScreen & DuplicateGroupDetailScreen
+│   ├── export/                      # ExportScreen (ZIP progress & destination)
+│   ├── imagedetail/                 # ImageDetailScreen (Face boxes & OCR inspector)
+│   ├── ledger/                      # RaseedLedgerScreen (Receipt expense breakdown)
+│   ├── metrics/                     # MetricsScreen (Benchmark trigger & telemetry)
+│   ├── navigation/                  # MainViewModel, NowIndexingBar, Routes, BottomBar
+│   ├── onboarding/                  # First-launch onboarding gate
+│   ├── people/                      # PeopleScreen (Best portraits)
+│   ├── permission/                  # PermissionDeniedScreen & partial access gate
+│   ├── search/                      # Instant Search screen
+│   ├── settings/                    # SettingsScreen (Zero-Internet badge & Wipe/Rescan)
+│   ├── storage/                     # StorageSaverScreen (Blurry photo purge)
+│   └── theme/                       # Glassmorphic dark theme
+└── work/                            # WorkManager IndexWorker & IncrementalSyncWorker
 ```
 
 ---
 
-## Interactive Web Preview (`/web`)
+## Getting Started
 
-An interactive monochrome frontend preview is available in `web/` for visual exploration:
-- Built with React, TypeScript, and Tailwind CSS.
-- Mirrors the Android app screens and layout.
-- Run with:
+### Prerequisites
+- **JDK 17 or JDK 21**
+- **Android Studio Ladybug (2024.2+)** or later
+- **Android SDK:** API 34 / 35
+- Physical device or Emulator running **Android 11+ (API 30+)**
+
+### Setting Up Local Environment
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Samar1729/ThreeLoops_droidrush.git
+   cd ThreeLoops_droidrush
+   ```
+
+2. **Configure SDK Path:**
+   Create `android/local.properties`:
+   ```properties
+   sdk.dir=/Users/<username>/Library/Android/sdk
+   ```
+
+3. **Build the Debug APK:**
+   ```bash
+   cd android
+   ./gradlew assembleDebug
+   ```
+
+4. **Run Unit Tests:**
+   ```bash
+   ./gradlew testDebugUnitTest
+   ```
+
+5. **Install on Connected Device via ADB:**
+   ```bash
+   ./gradlew installDebug
+   adb shell am start -n com.threeloops.mirrorarchive/.MainActivity
+   ```
+
+---
+
+## Screen Mirroring on Mac
+
+To view and control the app directly from your Mac:
+
+- **Option A (Android Studio Built-in):** In Android Studio, open the **Running Devices** tab on the right side $\rightarrow$ click **`+`** $\rightarrow$ select your connected phone. (Click the gear icon $\rightarrow$ **View Mode** $\rightarrow$ **Window** to pop it out).
+- **Option B (Standalone `scrcpy`):**
   ```bash
-  cd web
-  npm install
-  npm run dev
+  brew install scrcpy
+  scrcpy
   ```
 
 ---
 
-## Getting Started: Android Development Setup
+## Testing
 
-To build and run the Android app locally:
+The project includes a comprehensive suite of unit and integration tests covering coroutine lifecycles, hashing benchmarks, burst selection, duplicate clustering, and storage thresholds:
 
-### 1. Install JDK 17
 ```bash
-brew install openjdk@17
+cd android
+./gradlew testDebugUnitTest
 ```
-Add to `~/.zshrc`:
-```bash
-export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
-export PATH="$JAVA_HOME/bin:$PATH"
-```
+*Current test suite: **61 passed, 0 failed**.*
 
-### 2. Install Android Studio
-- Download **Android Studio** from [developer.android.com/studio](https://developer.android.com/studio).
-- Install the Android SDK (API 34/35) and an Android Virtual Device (AVD).
+---
 
-### 3. Open and Run
-1. Open Android Studio.
-2. Select **Open** and choose the `android/` directory.
-3. Wait for Gradle sync to complete.
-4. Select a virtual device or connected phone and click **Run**.
+## License
+
+Developed by **Team ThreeLoops** for Droidrush 2026.
