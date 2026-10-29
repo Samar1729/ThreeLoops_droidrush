@@ -182,7 +182,10 @@ fun MainNavigationApp(
         bottomBar = {
             if (!isGateScreen) {
                 Column {
-                    NowIndexingBar(progress = scanProgress)
+                    NowIndexingBar(
+                        progress = scanProgress,
+                        onBarClick = { navController.navigate(Routes.METRICS) }
+                    )
                     MirrorArchiveBottomBar(
                         currentRoute = currentRoute,
                         onNavigate = { route ->
