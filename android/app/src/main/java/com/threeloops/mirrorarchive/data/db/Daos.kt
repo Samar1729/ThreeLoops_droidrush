@@ -210,6 +210,9 @@ interface AlbumDao {
             GROUP BY album_entries.album"""
     )
     fun albumSummaries(): Flow<List<AlbumSummary>>
+
+    @Query("SELECT album FROM album_entries WHERE imageId = :imageId")
+    suspend fun albumsForImage(imageId: Long): List<AlbumType>
 }
 
 @Dao
