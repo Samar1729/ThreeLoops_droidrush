@@ -11,6 +11,7 @@ import com.threeloops.mirrorarchive.data.db.AppDatabase
 import com.threeloops.mirrorarchive.data.demo.DemoSeedData
 import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
+import com.threeloops.mirrorarchive.metrics.MetricsInbox
 import com.threeloops.mirrorarchive.ui.ledger.RaseedParser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -213,6 +214,7 @@ class SearchViewModel @Inject constructor(
                 flow.map { list ->
                     val latency = (System.currentTimeMillis() - startTime).coerceAtLeast(14L)
                     _lastLatencyMs.value = latency
+                    MetricsInbox.recordSearchLatency(latency)
                     if (list.isEmpty()) SearchUiState.Empty
                     else SearchUiState.Results(list, latencyMs = latency)
                 }

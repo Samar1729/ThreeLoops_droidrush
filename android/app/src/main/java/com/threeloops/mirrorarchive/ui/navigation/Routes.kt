@@ -81,4 +81,6 @@ object Routes {
      * @param ids Comma-separated media IDs.
      */
     fun export(ids: String = ""): String = "export?ids=$ids"
+
+    fun export(ids: List<Long>): String = "export?ids=${ids.joinToString(",")}"
 }

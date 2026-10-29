@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,7 +38,8 @@ fun AlbumDetailScreen(
     viewModel: AlbumsViewModel,
     onBackClick: () -> Unit,
     onImageClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onExportClick: (List<Long>) -> Unit = {}
 ) {
     val albumType = try {
         AlbumType.valueOf(albumTypeStr.uppercase())
@@ -64,40 +66,63 @@ fun AlbumDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .glass(
-                            shape = CircleShape,
-                            backgroundColor = Color.White.copy(alpha = 0.08f),
-                            topBorderAlpha = 0.35f
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .glass(
+                                shape = CircleShape,
+                                backgroundColor = Color.White.copy(alpha = 0.08f),
+                                topBorderAlpha = 0.35f
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextPrimary,
+                            modifier = Modifier.size(18.dp)
                         )
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = "Back",
-                        tint = TextPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column {
+                        Text(
+                            text = title,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${images.size} items",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(14.dp))
-
-                Column {
-                    Text(
-                        text = title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "${images.size} items",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
+                if (images.isNotEmpty()) {
+                    IconButton(
+                        onClick = { onExportClick(images.map { it.mediaId }) },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .glass(
+                                shape = CircleShape,
+                                backgroundColor = Color.White.copy(alpha = 0.08f),
+                                topBorderAlpha = 0.35f
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Archive,
+                            contentDescription = "Export Album",
+                            tint = TextPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 

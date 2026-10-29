@@ -1,5 +1,6 @@
 package com.threeloops.mirrorarchive.ui.storage
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,11 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.threeloops.mirrorarchive.contracts.ImageItem
+import com.threeloops.mirrorarchive.storage.StorageSaverViewModel
 import com.threeloops.mirrorarchive.ui.theme.GlassCard
 import com.threeloops.mirrorarchive.ui.theme.GlassScaffoldBackground
 import com.threeloops.mirrorarchive.ui.theme.TextMuted
@@ -33,9 +37,13 @@ import com.threeloops.mirrorarchive.ui.theme.glass
 fun StorageSaverScreen(
     onBackClick: () -> Unit,
     onImageClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: StorageSaverViewModel = hiltViewModel()
 ) {
-    var threshold by remember { mutableFloatStateOf(80f) }
+    val currentThreshold by viewModel.threshold.collectAsState()
+    val lowBlurImages by viewModel.lowBlurImages.collectAsState()
+    val reclaimableBytes by viewModel.reclaimableBytes.collectAsState()
+    val context = LocalContext.current
 
     val sampleBlurry = remember {
         listOf(
@@ -44,8 +52,8 @@ fun StorageSaverScreen(
         )
     }
 
-    val filtered = sampleBlurry.filter { it.blurScore < threshold }
-    val totalReclaimableBytes = filtered.sumOf { it.sizeBytes }
+    val displayImages = if (lowBlurImages.isNotEmpty()) lowBlurImages else sampleBlurry.filter { it.blurScore < currentThreshold }
+    val totalBytes = if (lowBlurImages.isNotEmpty()) reclaimableBytes else displayImages.sumOf { it.sizeBytes }
 
     GlassScaffoldBackground {
         Column(
@@ -117,7 +125,7 @@ fun StorageSaverScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "< ${threshold.toInt()}",
+                                text = "< ${currentThreshold.toInt()}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextSecondary
@@ -127,8 +135,8 @@ fun StorageSaverScreen(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Slider(
-                            value = threshold,
-                            onValueChange = { threshold = it },
+                            value = currentThreshold.toFloat(),
+                            onValueChange = { viewModel.updateThreshold(it.toDouble()) },
                             valueRange = 20f..150f,
                             colors = SliderDefaults.colors(
                                 thumbColor = Color.White,
@@ -143,12 +151,12 @@ fun StorageSaverScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "${filtered.size} photos flagged",
+                                text = "${displayImages.size} photos flagged",
                                 fontSize = 12.sp,
                                 color = TextSecondary
                             )
                             Text(
-                                text = "Free up ${"%.1f".format(totalReclaimableBytes / (1024.0 * 1024.0))} MB",
+                                text = "Free up ${"%.1f".format(totalBytes / (1024.0 * 1024.0))} MB",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = TextPrimary
@@ -159,6 +167,33 @@ fun StorageSaverScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                if (displayImages.isNotEmpty()) {
+                    Button(
+                        onClick = {
+                            viewModel.purgeLowBlur(displayImages) {
+                                Toast.makeText(context, "Cleaned ${displayImages.size} blurry photos", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = "Clean All Flagged (${"%.1f".format(totalBytes / (1024.0 * 1024.0))} MB)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+
                 // Grid of Blurry Photos
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
@@ -167,7 +202,7 @@ fun StorageSaverScreen(
                     contentPadding = PaddingValues(bottom = 100.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filtered, key = { it.id }) { image ->
+                    items(displayImages, key = { it.id }) { image ->
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()

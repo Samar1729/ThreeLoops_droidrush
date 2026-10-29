@@ -71,7 +71,7 @@ class PeopleViewModel @Inject constructor(
                             labels = imgLabels.map { LabelResult(it.label, it.confidence) },
                             faces = imgFaces.map { FaceInfo(Rect(it.left, it.top, it.right, it.bottom), it.smileProb, it.eyesOpenProb) }
                         )
-                    }
+                    }.sortedByDescending { it.score }
                 }
             }
         }
