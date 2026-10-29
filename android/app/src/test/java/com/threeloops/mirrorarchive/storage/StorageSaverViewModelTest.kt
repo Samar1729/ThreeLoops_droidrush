@@ -2,9 +2,14 @@ package com.threeloops.mirrorarchive.storage
 
 import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.data.repo.FakeImageRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -17,13 +22,20 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class StorageSaverViewModelTest {
 
+    private val testDispatcher = StandardTestDispatcher()
     private lateinit var repository: FakeImageRepository
     private lateinit var viewModel: StorageSaverViewModel
 
     @Before
     fun setUp() {
+        Dispatchers.setMain(testDispatcher)
         repository = FakeImageRepository()
         viewModel = StorageSaverViewModel(repository)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test
@@ -61,9 +73,10 @@ class StorageSaverViewModelTest {
         )
 
         var completed = false
-        viewModel.purgeLowBlur(listOf(testItem)) {
+        val job = viewModel.purgeLowBlur(listOf(testItem)) {
             completed = true
         }
+        job.join()
 
         assertTrue("Purge callback must complete successfully", completed)
     }
