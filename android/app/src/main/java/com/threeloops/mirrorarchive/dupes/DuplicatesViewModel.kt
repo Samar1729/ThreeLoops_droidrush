@@ -114,9 +114,13 @@ class DuplicatesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val s = _state.value
             if (s is DuplicatesUiState.Results) {
-                for (group in s.groups) {
-                    val toDelete = group.imageIds.filter { it != group.bestId }
-                    repository.deleteRows(toDelete)
+                val nonBestIds = s.groups.flatMap { group ->
+                    group.imageIds.filter { it != group.bestId }
+                }
+                if (nonBestIds.isNotEmpty()) {
+                    val items = repository.items(nonBestIds)
+                    val mediaIds = items.map { it.mediaId }
+                    repository.deleteRows(mediaIds)
                 }
                 scan()
             }
