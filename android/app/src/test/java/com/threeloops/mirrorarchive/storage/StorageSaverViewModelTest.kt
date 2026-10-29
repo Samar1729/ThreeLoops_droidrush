@@ -68,3 +68,4 @@ class StorageSaverViewModelTest {
         assertTrue("Purge callback must complete successfully", completed)
     }
 }
+
