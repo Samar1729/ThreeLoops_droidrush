@@ -7,31 +7,31 @@
 [![Database](https://img.shields.io/badge/Database-Room%20%2B%20SQLCipher%20256--bit-FF6F00.svg)](https://www.zetetic.net/sqlcipher/)
 [![Tests](https://img.shields.io/badge/Unit%20Tests-61%20Passed-brightgreen.svg)](#testing)
 
-**Mirror Archive** is an ultra-private, 100% on-device intelligent gallery manager and offline archive for Android. Built strictly with **zero internet permissions**, Mirror Archive brings enterprise-grade computer vision, perceptual hashing, duplicate clustering, receipt expense tracking, and storage optimization directly to your smartphone CPU/NPU without a single byte ever leaving your device.
+**Mirror Archive** is an ultra-private, 100% on-device intelligent gallery manager and offline photo vault for Android. Built strictly with **zero internet permissions**, Mirror Archive delivers computer vision, perceptual hashing, duplicate clustering, receipt expense tracking, and storage optimization directly on your smartphone CPU/NPU without a single byte ever leaving your device.
 
 ---
 
-## Team Ownership & Architecture
+## Team Ownership
 
-| Member | Focus | Responsibilities & Implemented Modules |
+| Member | Focus | Responsibilities |
 | :--- | :--- | :--- |
-| **Samar** | **Deduplication, Benchmark & Storage Saver** | **S-1** Runtime Permissions Manager (API 30–34+), **S-2** Index WorkManager Pipeline, **S-3** 64-bit dHash Duplicate Clustering & Burst Selector, **S-4** Storage Saver (Laplacian Blur 10th-percentile), **S-5** Zero-Permission Sandbox & Reset, **S-6** Incremental ContentObserver Sync, **S-7** dHash Throughput Benchmark (Module 3.19). |
-| **Rishav** | **Storage, MediaStore & Telemetry** | **R-1** Room Database & Encrypted SQLCipher Migrations, **R-2** MediaStore Ingestion Scanner, **R-3** Batch Purge Plan & MediaStore Intent Sender, **R-4** Zip Archive Export Engine, **R-5** Telemetry Metrics Inbox & Analytics, **R-6** Heuristic Rule-based Album Classifier. |
-| **Aditya** | **Machine Learning & Jetpack Compose UI** | Bundled on-device Google ML Kit (Image Labeling, Face Detection, OCR), Face Quality Scoring (Smile & Eyes-Open probability), Receipt OCR Parser (*Raseed Ledger*), and Jetpack Compose Glassmorphism Design System. |
+| **Samar** | **Deduplication, Benchmark & Storage Saver** | Perceptual difference hashing (dHash), Hamming distance duplicate clustering, burst shot selection, Laplacian blur variance calculation, dynamic storage saver thresholding, reactive runtime permissions manager, and incremental background synchronization. |
+| **Rishav** | **Storage, MediaStore & Telemetry** | Encrypted local database (Room + SQLCipher), MediaStore content ingestion, scoped storage batch deletion intents, deterministic ZIP archive export engine, telemetry metrics inbox, and heuristic album classifier. |
+| **Aditya** | **Machine Learning & Jetpack Compose UI** | Bundled on-device Google ML Kit pipelines (Image Labeling, Face Detection, OCR), facial quality ranking (smile and eyes-open probabilities), receipt expense parser, and Jetpack Compose design system. |
 
 ---
 
-## Key Features
+## Core Features
 
 ### 1. Smart Albums & Classification
 - **Automatic Rule-Based Categorization:** Instant classification into **Screenshots**, **Documents**, **Food**, **Receipts**, **People**, and **Places**.
 - **Edge ML Labeling:** Offline semantic image recognition powered by bundled Google ML Kit.
-- **Batch ZIP Export:** Export entire albums or selected photos into an uncompressed or compressed ZIP archive with deterministic file naming.
+- **Batch ZIP Export:** Export entire albums or selected photos into an uncompressed or compressed ZIP archive with clean naming.
 
 ### 2. Duplicate Detection & Burst Selection
-- **64-bit Grayscale dHash:** High-efficiency difference hashing comparing adjacent gradients.
-- **Hamming Distance Bucketing:** Sub-quadratic clustering identifying duplicate groups with distance $\le 10$.
-- **Smart Burst Selector:** Automatically preserves the best frame (highest resolution, least blurry, highest face score) while designating candidates for reclaimable space.
+- **64-bit Grayscale dHash:** High-efficiency difference hashing comparing adjacent gradients across downsampled frames.
+- **Hamming Distance Bucketing:** Sub-quadratic clustering identifying duplicate groups with bitwise distance $\le 10$.
+- **Smart Burst Selector:** Automatically preserves the best frame (highest resolution, least blurry, highest face score) while designating redundant shots for reclaimable space.
 - **Scoped Storage Purge:** Direct integration with Android's system `createDeleteRequest` intent sender for secure MediaStore deletion.
 
 ### 3. Storage Saver & Blur Analysis
@@ -41,7 +41,7 @@
 
 ### 4. Raseed Ledger (Receipt Expense Scanner)
 - **Offline OCR Pipeline:** Bundled Google ML Kit Text Recognition scans physical receipts and invoices.
-- **Autonomous Raseed Parser:** Extracts vendor name, date, itemized rows, tax, payment method, and currency totals (INR `₹`, USD `$`, EUR `€`, GBP `£`).
+- **Autonomous Receipt Parser:** Extracts vendor name, date, itemized rows, tax, payment method, and currency totals (INR `₹`, USD `$`, EUR `€`, GBP `£`).
 - **Dynamic Expense Analytics:** Aggregates spend totals across categories (Groceries, Dining, Utilities, Retail).
 
 ### 5. People & Face Quality Intelligence
@@ -49,7 +49,7 @@
 - **Quality Scoring:** Ranks portrait photos using combined smile probability and eyes-open metrics to prioritize your best memories.
 
 ### 6. Hardware Benchmarking & Telemetry
-- **Hash Throughput Benchmark (S-7):** Benchmarks dHash generation throughput in images per second directly on your phone's processor.
+- **Hash Throughput Benchmark:** Benchmarks dHash generation throughput in images per second directly on your phone's processor.
 - **Live Metrics Dashboard:** Monitors total scan duration, database file size, search latencies, and total reclaimed storage.
 - **Now-Indexing Progress Bar:** Real-time foreground WorkManager progress updates with phase transitions (`QUEUED`, `SCANNING`, `SYNCING`, `PAUSED`, `COMPLETE`).
 
@@ -69,14 +69,14 @@
 ```
 android/app/src/main/java/com/threeloops/mirrorarchive/
 ├── albums/                          # Rule-based album classifier & categories
-├── contracts/                       # Frozen domain contracts & immutable data models
+├── contracts/                       # Clean domain contracts & immutable data models
 ├── data/
 │   ├── db/                          # Room Database, DAOs & SQLCipher security
 │   ├── export/                      # ZIP Archive Export Worker & ViewModel
 │   ├── mediastore/                  # MediaStore scanner, queries & ContentObserver
 │   └── repo/                        # RoomImageRepository implementation
 ├── dupes/                           # 64-bit dHash, Burst selector, Purge ViewModel
-├── metrics/                         # Benchmark (S-7) & MetricsInbox telemetry
+├── metrics/                         # Hash Benchmark & MetricsInbox telemetry
 ├── ml/                              # Bundled ML Kit Image Labeling, Face & OCR Analyzers
 ├── people/                          # Face quality scoring & PeopleViewModel
 ├── permissions/                     # PermissionManager (API 30–34+ reactive flow)
@@ -160,7 +160,7 @@ To view and control the app directly from your Mac:
 
 ## Testing
 
-The project includes unit and integration tests covering coroutine lifecycles, hashing benchmarks, burst selection, duplicate clustering, and storage thresholds:
+The project includes a comprehensive suite of unit and integration tests covering coroutine lifecycles, hashing benchmarks, burst selection, duplicate clustering, and storage thresholds:
 
 ```bash
 cd android
