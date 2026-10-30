@@ -47,6 +47,7 @@ import com.threeloops.mirrorarchive.ui.albums.AlbumsViewModel
 import com.threeloops.mirrorarchive.ui.auth.AuthScreen
 import com.threeloops.mirrorarchive.ui.dupes.DuplicateGroupDetailScreen
 import com.threeloops.mirrorarchive.ui.dupes.DuplicatesScreen
+import com.threeloops.mirrorarchive.ui.export.ExportScreen
 import com.threeloops.mirrorarchive.ui.imagedetail.ImageDetailScreen
 import com.threeloops.mirrorarchive.ui.metrics.MetricsScreen
 import com.threeloops.mirrorarchive.ui.ledger.RaseedLedgerScreen
@@ -181,7 +182,10 @@ fun MainNavigationApp(
         bottomBar = {
             if (!isGateScreen) {
                 Column {
-                    NowIndexingBar(progress = scanProgress)
+                    NowIndexingBar(
+                        progress = scanProgress,
+                        onBarClick = { navController.navigate(Routes.METRICS) }
+                    )
                     MirrorArchiveBottomBar(
                         currentRoute = currentRoute,
                         onNavigate = { route ->
@@ -220,6 +224,9 @@ fun MainNavigationApp(
                     },
                     onNavigateSettings = {
                         navController.navigate(Routes.SETTINGS)
+                    },
+                    onNavigateExport = {
+                        navController.navigate(Routes.export())
                     }
                 )
             }
@@ -315,6 +322,9 @@ fun MainNavigationApp(
                     onBackClick = { navController.popBackStack() },
                     onImageClick = { imageId ->
                         navController.navigate(Routes.imageDetail(imageId))
+                    },
+                    onExportClick = { ids ->
+                        navController.navigate(Routes.export(ids))
                     }
                 )
             }
@@ -330,21 +340,27 @@ fun MainNavigationApp(
             ) { backStackEntry ->
                 val imageIdStr = backStackEntry.arguments?.getString("imageId") ?: "1"
                 val imageId = imageIdStr.toLongOrNull() ?: 1L
-                val albumsViewModel: AlbumsViewModel = hiltViewModel()
-                val imageItem = albumsViewModel.getImage(imageId) ?: ImageItem(
-                    id = imageId,
-                    mediaId = 100L + imageId,
-                    uri = "content://media/external/images/media/${100L + imageId}",
-                    dateAdded = System.currentTimeMillis() / 1000,
-                    dateTaken = System.currentTimeMillis(),
-                    sizeBytes = 2_800_000L,
-                    width = 1920,
-                    height = 1080,
-                    blurScore = 120.0,
-                    faceCount = 1
-                )
                 ImageDetailScreen(
-                    image = imageItem,
+                    imageId = imageId,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Routes.EXPORT,
+                arguments = listOf(
+                    navArgument("ids") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                )
+            ) { backStackEntry ->
+                val ids = backStackEntry.arguments?.getString("ids")
+                    .orEmpty()
+                    .split(',')
+                    .mapNotNull(String::toLongOrNull)
+                ExportScreen(
+                    initialIds = ids,
                     onBackClick = { navController.popBackStack() }
                 )
             }

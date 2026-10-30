@@ -51,6 +51,7 @@ fun AlbumsScreen(
     onNavigateDuplicates: () -> Unit,
     onNavigateStorageSaver: () -> Unit,
     onNavigateSettings: () -> Unit = {},
+    onNavigateExport: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current

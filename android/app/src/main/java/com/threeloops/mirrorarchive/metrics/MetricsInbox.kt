@@ -8,7 +8,8 @@ data class InboxSnapshot(
     val comparisonsNaive: Long = 0,
     val comparisonsBucketed: Long = 0,
     val reclaimableBytes: Long = 0,
-    val searchLatenciesMs: List<Long> = emptyList()
+    val searchLatenciesMs: List<Long> = emptyList(),
+    val hashThroughputImgPerSec: Double = 0.0
 ) {
     val searchLatencyMsP50: Double
         get() {
@@ -38,6 +39,11 @@ object MetricsInbox {
     fun recordSearchLatency(ms: Long) {
         if (ms < 0L) return
         mutableSnapshot.update { it.copy(searchLatenciesMs = (it.searchLatenciesMs + ms).takeLast(MAX_LATENCIES)) }
+    }
+
+    fun setHashThroughput(throughput: Double) {
+        if (throughput < 0.0) return
+        mutableSnapshot.update { it.copy(hashThroughputImgPerSec = throughput) }
     }
 
     private const val MAX_LATENCIES = 1_000

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.threeloops.mirrorarchive.contracts.ImageItem
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -49,6 +53,21 @@ class StorageSaverViewModel @Inject constructor(
 
     fun updateThreshold(newThreshold: Double) {
         _threshold.value = newThreshold
+    }
+
+    /**
+     * Purges the specified low blur images from the database index.
+     */
+    fun purgeLowBlur(images: List<ImageItem>, onComplete: () -> Unit = {}): Job {
+        return viewModelScope.launch {
+            val mediaIds = images.map { it.mediaId }
+            if (mediaIds.isNotEmpty()) {
+                withContext(Dispatchers.IO) {
+                    repository.deleteRows(mediaIds)
+                }
+            }
+            onComplete()
+        }
     }
 
     // Route: suggestedThreshold(): Double[cite: 55]

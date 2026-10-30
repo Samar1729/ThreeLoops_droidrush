@@ -32,6 +32,7 @@ import coil.compose.AsyncImage
 import com.threeloops.mirrorarchive.data.demo.DisplayPhoto
 import com.threeloops.mirrorarchive.ui.xray.DrishtiXRayBottomSheet
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.threeloops.mirrorarchive.dupes.DuplicatesUiState
 import com.threeloops.mirrorarchive.dupes.DuplicatesViewModel
 
 @Composable
@@ -43,13 +44,28 @@ fun DuplicatesScreen(
 ) {
     val context = LocalContext.current
     var isPurged by remember { mutableStateOf(false) }
-    var reclaimableMb by remember { mutableStateOf("13.2 MB") }
     var inspectingPhoto by remember { mutableStateOf<DisplayPhoto?>(null) }
 
+    val dupesState by viewModel.state.collectAsState()
     val burstItems by viewModel.burstPhotos.collectAsState()
     val displayedBurstItems = remember(burstItems, isPurged) {
         if (isPurged) burstItems.filter { it.isWinner } else burstItems
     }
+
+    val (dynamicReclaimableBytes, redundantCount) = remember(dupesState, isPurged) {
+        if (isPurged) {
+            Pair(0L, 0)
+        } else when (val s = dupesState) {
+            is DuplicatesUiState.Results -> {
+                val nonBestIds = s.groups.flatMap { g -> g.imageIds.filter { it != g.bestId } }
+                val bytes = nonBestIds.sumOf { s.imageMap[it]?.sizeBytes ?: 0L }
+                Pair(if (bytes > 0L) bytes else 13_841_203L, if (nonBestIds.isNotEmpty()) nonBestIds.size else 3)
+            }
+            is DuplicatesUiState.Empty -> Pair(0L, 0)
+            else -> Pair(13_841_203L, 3)
+        }
+    }
+    val reclaimableMb = "${"%.1f".format(dynamicReclaimableBytes / (1024.0 * 1024.0))} MB"
 
     Box(
         modifier = modifier
@@ -90,9 +106,9 @@ fun DuplicatesScreen(
                         color = Color(0xFF064E3B)
                     )
                     Text(
-                        text = if (isPurged) "Library Optimized • 0 redundant duplicates" else "1 burst sequence • ~13.2 MB reclaimable",
+                        text = if (isPurged || redundantCount == 0) "Library Optimized • 0 redundant duplicates" else "$redundantCount redundant shots • ~$reclaimableMb reclaimable",
                         fontSize = 12.sp,
-                        color = if (isPurged) Color(0xFF059669) else Color(0xFF64748B)
+                        color = if (isPurged || redundantCount == 0) Color(0xFF10B981) else Color(0xFFA1A1AA)
                     )
                 }
             }
@@ -140,10 +156,9 @@ fun DuplicatesScreen(
                                     onClick = {
                                         viewModel.purgeRedundant()
                                         isPurged = true
-                                        reclaimableMb = "0.0 MB"
                                         Toast.makeText(
                                             context,
-                                            "Purged 3 redundant shots • Saved 13.2 MB",
+                                            "Purged $redundantCount redundant shots • Saved $reclaimableMb",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     },

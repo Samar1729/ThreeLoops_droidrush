@@ -174,8 +174,9 @@ fun RaseedLedgerScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    val totalAmount = receiptDemoPhotos.sumOf { it.totalDouble ?: 0.0 }
-                    val totalGst = totalAmount * 0.18
+                    val totalAmount = if (summary.totalSpent > 0.0) summary.totalSpent else receiptDemoPhotos.sumOf { it.totalDouble ?: 0.0 }
+                    val totalGst = if (summary.totalGstClaimable > 0.0) summary.totalGstClaimable else totalAmount * 0.18
+                    val invoiceCount = if (summary.receiptCount > 0) summary.receiptCount else receiptDemoPhotos.size
 
                     Text(
                         text = "₹ ${"%,.2f".format(totalAmount)}",
@@ -194,7 +195,7 @@ fun RaseedLedgerScreen(
                         Column {
                             Text(text = "Invoices", fontSize = 11.sp, color = Color(0xFF64748B))
                             Text(
-                                text = "${displayReceipts.size}",
+                                text = "$invoiceCount",
                                 fontSize = 13.sp,
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.SemiBold,

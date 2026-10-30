@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +37,9 @@ import com.threeloops.mirrorarchive.ui.theme.glass
 @Composable
 fun NowIndexingBar(
     progress: ScanProgress,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBarClick: () -> Unit = {},
+    onCancelClick: () -> Unit = {}
 ) {
     val isVisible = progress.phase != ScanPhase.IDLE && progress.phase != ScanPhase.COMPLETE
 
@@ -57,6 +60,7 @@ fun NowIndexingBar(
                     topBorderAlpha = 0.35f,
                     bottomBorderAlpha = 0.12f
                 )
+                .clickable { onBarClick() }
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {

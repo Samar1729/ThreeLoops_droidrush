@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -48,7 +49,7 @@ class RaseedLedgerViewModel @Inject constructor(
                     val raseedList = mutableListOf<RaseedItem>()
 
                     val receiptItems = if (items.isNotEmpty()) items else {
-                        val all = database.imageDao().imagesByIds(database.imageDao().allMediaIds())
+                        val all = database.imageDao().allImages().first()
                         all.filter { img ->
                             img.displayName.contains("receipt", ignoreCase = true) ||
                             img.displayName.contains("bill", ignoreCase = true) ||

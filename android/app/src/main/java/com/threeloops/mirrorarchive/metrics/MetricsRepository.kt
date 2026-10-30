@@ -19,7 +19,8 @@ data class MetricsSnapshot(
     val searchLatencyMsP50: Double,
     val peakHeapMb: Double,
     val dbSizeMb: Double,
-    val networkPermission: String
+    val networkPermission: String,
+    val hashThroughputImgPerSec: Double = 0.0
 )
 
 @Singleton
@@ -61,7 +62,8 @@ class MetricsRepository @Inject constructor(
                 searchLatencyMsP50 = inbox.searchLatencyMsP50,
                 peakHeapMb = maxOf(currentMemoryMb, stat?.peakHeapMb ?: 0.0, memoryProbe.peakMb().toDouble()),
                 dbSizeMb = settingsRepository.dbSizeBytes() / (1024.0 * 1024.0),
-                networkPermission = if (manifestAudit.hasInternetPermission()) "present" else "none"
+                networkPermission = if (manifestAudit.hasInternetPermission()) "present" else "none",
+                hashThroughputImgPerSec = inbox.hashThroughputImgPerSec
             )
         }
     }
