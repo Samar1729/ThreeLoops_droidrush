@@ -58,7 +58,6 @@ class RecoveringSupportSQLiteOpenHelper internal constructor(
             removeDatabaseFiles()
             keyProvider.resetForRecovery()
             val recovered = requireNotNull(createDelegate()).writableDatabase
-            clearPassphrase()
             resetCheckpoint(recovered)
             markRecoveryNotice()
             runCatching(onRecovered)
@@ -69,18 +68,15 @@ class RecoveringSupportSQLiteOpenHelper internal constructor(
         try {
             val helper = createDelegate()
             val database = if (readOnly) helper.readableDatabase else helper.writableDatabase
-            clearPassphrase()
             database
         } catch (failure: Exception) {
             if (!isKeyOrCipherOpenFailure(failure)) {
-                clearPassphrase()
                 throw failure
             }
             closeDelegate()
             removeDatabaseFiles()
             keyProvider.resetForRecovery()
             val recovered = requireNotNull(createDelegate()).writableDatabase
-            clearPassphrase()
             resetCheckpoint(recovered)
             markRecoveryNotice()
             runCatching(onRecovered)
@@ -140,12 +136,14 @@ class RecoveringSupportSQLiteOpenHelper internal constructor(
         var current: Throwable? = error
         while (current != null) {
             if (current is KeyLossException) return true
+            val name = current.javaClass.name
             val message = current.message.orEmpty().lowercase()
             val cipherError = message.contains("not a database") ||
                 message.contains("file is encrypted") ||
-                message.contains("decrypt") || message.contains("cipher")
+                message.contains("decrypt") || message.contains("cipher") ||
+                name.contains("NotADatabase")
             val sqliteError = current is FrameworkSQLiteException ||
-                current.javaClass.name.contains("SQLiteException")
+                name.contains("SQLite")
             if (sqliteError && cipherError) return true
             current = current.cause
         }

@@ -163,7 +163,7 @@ fun AuthScreen(
                     text = "Vault",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = Color(0xFF064E3B),
                     letterSpacing = (-0.5).sp
                 )
 
@@ -171,13 +171,13 @@ fun AuthScreen(
                     text = if (isError) errorMessage else "Enter 6-digit passcode to unlock",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Normal,
-                    color = if (isError) Color(0xFFFF453A) else Color(0xFFA1A1AA),
+                    color = if (isError) Color(0xFFDC2626) else Color(0xFF64748B),
                     modifier = Modifier.padding(top = 6.dp)
                 )
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // 6-digit Glass PIN Indicators
+                // 6-digit PIN Indicators
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -185,12 +185,12 @@ fun AuthScreen(
                     for (i in 0 until 6) {
                         val isFilled = i < enteredPin.length
                         val dotColor by animateColorAsState(
-                            targetValue = if (isFilled) Color.White else Color.White.copy(alpha = 0.08f),
+                            targetValue = if (isFilled) Color(0xFF059669) else Color(0xFFE2E8F0),
                             animationSpec = tween(150),
                             label = "dotColor"
                         )
                         val borderColor by animateColorAsState(
-                            targetValue = if (isFilled) Color.White else Color.White.copy(alpha = 0.25f),
+                            targetValue = if (isFilled) Color(0xFF064E3B) else Color(0xFFCBD5E1),
                             animationSpec = tween(150),
                             label = "borderColor"
                         )
@@ -206,7 +206,7 @@ fun AuthScreen(
                 }
             }
 
-            // Keypad Grid: Glassmorphic Black & White buttons
+            // Keypad Grid: Clean White & Emerald buttons
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -232,13 +232,9 @@ fun AuthScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(74.dp)
-                                            .glass(
-                                                shape = CircleShape,
-                                                backgroundColor = Color.White.copy(alpha = 0.06f),
-                                                borderWidth = 1.dp,
-                                                topBorderAlpha = 0.30f,
-                                                bottomBorderAlpha = 0.05f
-                                            )
+                                            .clip(CircleShape)
+                                            .background(Color.White)
+                                            .border(1.dp, Color(0x3310B981), CircleShape)
                                             .clickable(
                                                 interactionSource = remember { MutableInteractionSource() },
                                                 indication = null
@@ -258,7 +254,7 @@ fun AuthScreen(
                                         Icon(
                                             imageVector = Icons.Outlined.Fingerprint,
                                             contentDescription = "Biometric Unlock",
-                                            tint = Color.White,
+                                            tint = Color(0xFF059669),
                                             modifier = Modifier.size(30.dp)
                                         )
                                     }
@@ -267,13 +263,9 @@ fun AuthScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(74.dp)
-                                            .glass(
-                                                shape = CircleShape,
-                                                backgroundColor = Color.White.copy(alpha = 0.06f),
-                                                borderWidth = 1.dp,
-                                                topBorderAlpha = 0.30f,
-                                                bottomBorderAlpha = 0.05f
-                                            )
+                                            .clip(CircleShape)
+                                            .background(Color.White)
+                                            .border(1.dp, Color(0x3310B981), CircleShape)
                                             .clickable(
                                                 interactionSource = remember { MutableInteractionSource() },
                                                 indication = null
@@ -283,7 +275,7 @@ fun AuthScreen(
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Outlined.Backspace,
                                             contentDescription = "Delete",
-                                            tint = Color.White,
+                                            tint = Color(0xFF059669),
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -292,13 +284,9 @@ fun AuthScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(74.dp)
-                                            .glass(
-                                                shape = CircleShape,
-                                                backgroundColor = Color.White.copy(alpha = 0.07f),
-                                                borderWidth = 1.dp,
-                                                topBorderAlpha = 0.32f,
-                                                bottomBorderAlpha = 0.05f
-                                            )
+                                            .clip(CircleShape)
+                                            .background(Color.White)
+                                            .border(1.dp, Color(0x3310B981), CircleShape)
                                             .clickable(
                                                 interactionSource = remember { MutableInteractionSource() },
                                                 indication = null
@@ -308,8 +296,8 @@ fun AuthScreen(
                                         Text(
                                             text = key,
                                             fontSize = 26.sp,
-                                            fontWeight = FontWeight.Normal,
-                                            color = Color.White
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF064E3B)
                                         )
                                     }
                                 }
@@ -321,7 +309,7 @@ fun AuthScreen(
                 Text(
                     text = "Passcode: 123456 or tap Biometric",
                     fontSize = 11.sp,
-                    color = Color(0xFF71717A),
+                    color = Color(0xFF64748B),
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }

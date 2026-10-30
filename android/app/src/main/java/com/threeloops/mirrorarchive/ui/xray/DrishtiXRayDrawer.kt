@@ -1,6 +1,7 @@
 package com.threeloops.mirrorarchive.ui.xray
 
 import android.graphics.Rect
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,8 +9,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Face
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Sensors
@@ -22,6 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -332,33 +338,79 @@ fun DrishtiXRayContent(
             }
         }
 
-        // Extracted OCR Snippet
+        // Extracted OCR Snippet with Copy-Paste Support
         if (!ocrText.isNullOrEmpty()) {
+            val context = LocalContext.current
+            val clipboardManager = LocalClipboardManager.current
             Spacer(modifier = Modifier.height(14.dp))
 
             GlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                backgroundColor = Color(0xDD121216),
+                backgroundColor = Color.White,
                 topBorderAlpha = 0.35f
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Extracted OCR Text (Latin v2)",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Extracted OCR Text (Latin v2)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF064E3B)
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF059669))
+                                .clickable {
+                                    clipboardManager.setText(AnnotatedString(ocrText))
+                                    Toast.makeText(context, "OCR text copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.ContentCopy,
+                                contentDescription = "Copy OCR",
+                                tint = Color.White,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Copy",
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = ocrText,
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = Color(0xFFA1A1AA),
-                        maxLines = 6
-                    )
+                    SelectionContainer {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFF1F8F4))
+                                .padding(10.dp)
+                        ) {
+                            Text(
+                                text = ocrText,
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = Color(0xFF0F172A),
+                                maxLines = 8,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
                 }
             }
         }

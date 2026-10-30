@@ -2,6 +2,7 @@ package com.threeloops.mirrorarchive.data.mediastore
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Size
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,8 +39,15 @@ class BitmapLoader @Inject constructor(
         var bitmap: Bitmap? = null
         return try {
             require(maxSide > 0) { "maxSide must be positive" }
-            bitmap = context.contentResolver.loadThumbnail(uri, Size(maxSide, maxSide), null)
-            if (bitmap.config == Bitmap.Config.HARDWARE) {
+            bitmap = try {
+                context.contentResolver.loadThumbnail(uri, Size(maxSide, maxSide), null)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            } ?: decodeFromStream(uri, maxSide)
+
+            if (bitmap != null && bitmap.config == Bitmap.Config.HARDWARE) {
                 val softwareBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false)
                     ?: return null
                 recycle(bitmap)
@@ -50,17 +58,33 @@ class BitmapLoader @Inject constructor(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (e: IOException) {
-            null
-        } catch (e: SecurityException) {
-            null
-        } catch (e: IllegalArgumentException) {
-            null
         } catch (e: Exception) {
             null
         } finally {
             // If conversion failed, don't leak the hardware bitmap returned by the resolver.
             recycle(bitmap)
+        }
+    }
+
+    private fun decodeFromStream(uri: Uri, maxSide: Int): Bitmap? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeStream(stream, null, bounds)
+                var sampleSize = 1
+                while (bounds.outWidth / sampleSize > maxSide || bounds.outHeight / sampleSize > maxSide) {
+                    sampleSize *= 2
+                }
+                context.contentResolver.openInputStream(uri)?.use { inStream ->
+                    val opts = BitmapFactory.Options().apply {
+                        inSampleSize = sampleSize
+                        inPreferredConfig = Bitmap.Config.ARGB_8888
+                    }
+                    BitmapFactory.decodeStream(inStream, null, opts)
+                }
+            }
+        } catch (e: Exception) {
+            null
         }
     }
 

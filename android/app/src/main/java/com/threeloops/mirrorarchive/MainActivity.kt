@@ -177,7 +177,7 @@ fun MainNavigationApp(
     )
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Black,
+        containerColor = Color(0xFFF7FCF9),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (!isGateScreen) {

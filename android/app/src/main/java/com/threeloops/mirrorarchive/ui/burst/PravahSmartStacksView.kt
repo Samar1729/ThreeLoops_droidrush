@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -177,27 +179,23 @@ private fun BurstSequenceCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .glass(
-                shape = RoundedCornerShape(22.dp),
-                backgroundColor = Color(0xDD141418),
-                borderWidth = 1.dp,
-                topBorderAlpha = 0.35f,
-                bottomBorderAlpha = 0.08f
-            )
+            .clip(RoundedCornerShape(22.dp))
+            .background(Color.White)
+            .border(1.dp, Color(0x2210B981), RoundedCornerShape(22.dp))
             .padding(16.dp)
     ) {
         Text(
             text = "Burst sequence · ${burst.imageIds.size} photos",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = Color(0xFF064E3B)
         )
         captureTime?.let {
             Text(
                 text = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
                     .format(Date(it)),
                 fontSize = 11.sp,
-                color = Color(0xFFA1A1AA)
+                color = Color(0xFF64748B)
             )
         }
         Spacer(Modifier.height(12.dp))
@@ -217,8 +215,8 @@ private fun BurstSequenceCard(
             onClick = onKeepBest,
             enabled = !isPurging,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Black
+                containerColor = Color(0xFF059669),
+                contentColor = Color.White
             ),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
@@ -227,7 +225,7 @@ private fun BurstSequenceCard(
                 CircularProgressIndicator(
                     modifier = Modifier.size(18.dp),
                     strokeWidth = 2.dp,
-                    color = Color.Black
+                    color = Color.White
                 )
                 Spacer(Modifier.width(8.dp))
             } else {
@@ -236,7 +234,8 @@ private fun BurstSequenceCard(
             }
             Text(
                 text = "Keep Best & Purge ${burst.imageIds.size - 1} Others",
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
             )
         }
     }
@@ -252,11 +251,11 @@ private fun BurstPhoto(
         modifier = Modifier
             .width(132.dp)
             .clip(RoundedCornerShape(14.dp))
-            .glass(
-                shape = RoundedCornerShape(14.dp),
-                backgroundColor = if (isWinner) Color(0x3310B981) else Color(0x33141418),
-                borderWidth = if (isWinner) 2.dp else 1.dp,
-                topBorderAlpha = if (isWinner) 0.65f else 0.2f
+            .background(if (isWinner) Color(0xFFD1FAE5) else Color(0xFFF1F5F9))
+            .border(
+                width = if (isWinner) 2.dp else 1.dp,
+                color = if (isWinner) Color(0xFF059669) else Color(0x2210B981),
+                shape = RoundedCornerShape(14.dp)
             )
             .clickable(onClick = onClick)
             .padding(6.dp)
@@ -274,7 +273,7 @@ private fun BurstPhoto(
             text = if (isWinner) "BEST SHOT" else "Blur ${image.blurScore.toInt()}",
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
-            color = if (isWinner) Color(0xFF10B981) else Color.White,
+            color = if (isWinner) Color(0xFF065F46) else Color(0xFF64748B),
             modifier = Modifier.padding(top = 6.dp, start = 2.dp, bottom = 2.dp)
         )
     }

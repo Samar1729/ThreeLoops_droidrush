@@ -87,14 +87,14 @@ fun PeopleScreen(
                 text = "People & Bursts",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = Color(0xFF064E3B),
                 letterSpacing = (-0.5).sp
             )
 
             Text(
                 text = "Offline Face Geometry Clustering & Pravah Burst Arena",
                 fontSize = 11.sp,
-                color = TextSecondary,
+                color = Color(0xFF059669),
                 modifier = Modifier.padding(top = 2.dp, bottom = 14.dp)
             )
 
@@ -103,12 +103,9 @@ fun PeopleScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(42.dp)
-                    .glass(
-                        shape = RoundedCornerShape(22.dp),
-                        backgroundColor = Color.White.copy(alpha = 0.05f),
-                        borderWidth = 1.dp,
-                        topBorderAlpha = 0.25f
-                    )
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(Color(0xFFE8F5E9))
+                    .border(1.dp, Color(0x3310B981), RoundedCornerShape(22.dp))
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -119,7 +116,7 @@ fun PeopleScreen(
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(18.dp))
-                        .background(if (isPortraits) Color.White.copy(alpha = 0.14f) else Color.Transparent)
+                        .background(if (isPortraits) Color(0xFF059669) else Color.Transparent)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -130,15 +127,15 @@ fun PeopleScreen(
                         Icon(
                             imageVector = Icons.Outlined.Face,
                             contentDescription = null,
-                            tint = if (isPortraits) Color.White else Color(0xFFA1A1AA),
+                            tint = if (isPortraits) Color.White else Color(0xFF475569),
                             modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Portraits (14)",
+                            text = "Portraits (${displayedPhotos.size})",
                             fontSize = 12.sp,
                             fontWeight = if (isPortraits) FontWeight.SemiBold else FontWeight.Medium,
-                            color = if (isPortraits) Color.White else Color(0xFFA1A1AA)
+                            color = if (isPortraits) Color.White else Color(0xFF475569)
                         )
                     }
                 }
@@ -149,7 +146,7 @@ fun PeopleScreen(
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(18.dp))
-                        .background(if (!isPortraits) Color(0x3310B981) else Color.Transparent)
+                        .background(if (!isPortraits) Color(0xFF059669) else Color.Transparent)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -160,7 +157,7 @@ fun PeopleScreen(
                         Icon(
                             imageVector = Icons.Outlined.AutoAwesome,
                             contentDescription = null,
-                            tint = if (!isPortraits) Color(0xFF10B981) else Color(0xFFA1A1AA),
+                            tint = if (!isPortraits) Color.White else Color(0xFF475569),
                             modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -168,7 +165,7 @@ fun PeopleScreen(
                             text = "Pravah Bursts",
                             fontSize = 12.sp,
                             fontWeight = if (!isPortraits) FontWeight.Bold else FontWeight.Medium,
-                            color = if (!isPortraits) Color(0xFF10B981) else Color(0xFFA1A1AA)
+                            color = if (!isPortraits) Color.White else Color(0xFF475569)
                         )
                     }
                 }
@@ -188,13 +185,9 @@ fun PeopleScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .glass(
-                                        shape = RoundedCornerShape(18.dp),
-                                        backgroundColor = Color(0xDD141418),
-                                        borderWidth = 1.dp,
-                                        topBorderAlpha = 0.30f,
-                                        bottomBorderAlpha = 0.06f
-                                    )
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(Color.White)
+                                    .border(1.dp, Color(0x2210B981), RoundedCornerShape(18.dp))
                                     .padding(horizontal = 14.dp, vertical = 10.dp)
                             ) {
                                 Column {
@@ -207,7 +200,7 @@ fun PeopleScreen(
                                             text = "Cosine Similarity Threshold",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color.White
+                                            color = Color(0xFF064E3B)
                                         )
 
                                         Text(
@@ -215,7 +208,7 @@ fun PeopleScreen(
                                             fontSize = 10.sp,
                                             fontFamily = FontFamily.Monospace,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF10B981)
+                                            color = Color(0xFF059669)
                                         )
                                     }
 
@@ -227,9 +220,9 @@ fun PeopleScreen(
                                         },
                                         valueRange = 0.75f..0.95f,
                                         colors = SliderDefaults.colors(
-                                            thumbColor = Color.White,
-                                            activeTrackColor = Color(0xFF10B981),
-                                            inactiveTrackColor = Color.White.copy(alpha = 0.15f)
+                                            thumbColor = Color(0xFF059669),
+                                            activeTrackColor = Color(0xFF059669),
+                                            inactiveTrackColor = Color(0xFFD1FAE5)
                                         ),
                                         modifier = Modifier.fillMaxWidth()
                                     )
@@ -375,18 +368,22 @@ private fun PortraitCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White)
+            .border(1.dp, Color(0x2210B981), RoundedCornerShape(14.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
+            .padding(8.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.85f)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF18181B))
+                .aspectRatio(0.92f)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFE2E8F0))
         ) {
             AsyncImage(
                 model = if (photo.drawableRes != 0) photo.drawableRes else photo.imageUrl,
@@ -400,7 +397,7 @@ private fun PortraitCard(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .background(Color.Black.copy(alpha = 0.60f), CircleShape)
+                    .background(Color(0xD9064E3B), CircleShape)
                     .padding(5.dp)
             ) {
                 Icon(
@@ -419,7 +416,7 @@ private fun PortraitCard(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(6.dp)
-                    .background(Color.Black.copy(alpha = 0.60f), RoundedCornerShape(8.dp))
+                    .background(Color(0xF0059669), RoundedCornerShape(8.dp))
                     .padding(horizontal = 6.dp, vertical = 3.dp)
             ) {
                 Text(
@@ -427,18 +424,18 @@ private fun PortraitCard(
                     fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10B981)
+                    color = Color.White
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = photo.title,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = Color(0xFF064E3B),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -446,7 +443,7 @@ private fun PortraitCard(
         Text(
             text = photo.subtitle,
             fontSize = 11.sp,
-            color = Color(0xFFA1A1AA),
+            color = Color(0xFF64748B),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

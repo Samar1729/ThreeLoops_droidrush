@@ -53,7 +53,17 @@ class IndexPipeline @Inject constructor(
                 row.displayName.contains("starbucks", ignoreCase = true) ||
                 row.displayName.contains("shell", ignoreCase = true) ||
                 row.displayName.contains("pharmacy", ignoreCase = true) ||
-                row.displayName.contains("grocery", ignoreCase = true)
+                row.displayName.contains("grocery", ignoreCase = true) ||
+                row.displayName.contains("import", ignoreCase = true) ||
+                row.displayName.contains("test", ignoreCase = true) ||
+                row.displayName.contains("sample", ignoreCase = true) ||
+                row.relativePath.contains("Download", ignoreCase = true) ||
+                labels.any { l ->
+                    val t = l.text.lowercase()
+                    t.contains("text") || t.contains("font") || t.contains("paper") ||
+                    t.contains("label") || t.contains("sign") || t.contains("book") ||
+                    t.contains("card") || t.contains("menu") || t.contains("ticket")
+                }
             val ocr = if (isTextCandidate) {
                 ocrBitmap = timed(Stage.DECODE) { loader.loadForOcr(row.uri) }
                 ocrBitmap?.let { loaded -> timed(Stage.OCR) { analyzer.ocr(loaded) } }.orEmpty()

@@ -20,31 +20,33 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Glassmorphism Black & White Theme Colors
-val PureBlack = Color(0xFF000000)
-val ObsidianBlack = Color(0xFF070709)
-val GlassSurface = Color(0x1AFFFFFF) // 10% white
-val GlassSurfaceHover = Color(0x26FFFFFF) // 15% white
-val GlassSurfaceSubtle = Color(0x0FFFFFFF) // 6% white
-val GlassSurfaceElevated = Color(0x2EFFFFFF) // 18% white
+// ========================================================
+// Glassmorphism Green to White Theme Constants
+// ========================================================
+val PureBlack = Color(0xFF0F172A)
+val ObsidianBlack = Color(0xFF064E3B)
+val GlassSurface = Color(0xF2FFFFFF) // 95% frosted white
+val GlassSurfaceHover = Color(0xFFFFFFFF)
+val GlassSurfaceSubtle = Color(0xE6F0FDF4) // Soft mint white
+val GlassSurfaceElevated = Color(0xFFFFFFFF)
 
-val GlassBorderLight = Color(0x40FFFFFF) // 25% white specular highlight
-val GlassBorderSubtle = Color(0x14FFFFFF) // 8% white bottom edge
+val GlassBorderLight = Color(0x3310B981) // 20% Emerald specular highlight
+val GlassBorderSubtle = Color(0x1F10B981) // 12% Emerald border
 
-val TextPrimary = Color(0xFFFFFFFF)
-val TextSecondary = Color(0xFFA1A1AA)
-val TextMuted = Color(0xFF71717A)
+val TextPrimary = Color(0xFF0F172A) // Dark slate for primary text
+val TextSecondary = Color(0xFF4B5563) // Crisp secondary
+val TextMuted = Color(0xFF9CA3AF)
 
 /**
  * Standard glass border brush with top-down specular reflection.
  */
 fun glassBorderBrush(
     topAlpha: Float = 0.28f,
-    bottomAlpha: Float = 0.06f
+    bottomAlpha: Float = 0.08f
 ): Brush = Brush.verticalGradient(
     colors = listOf(
-        Color.White.copy(alpha = topAlpha),
-        Color.White.copy(alpha = bottomAlpha)
+        Color(0xFF10B981).copy(alpha = topAlpha),
+        Color(0xFF10B981).copy(alpha = bottomAlpha)
     )
 )
 
@@ -53,10 +55,10 @@ fun glassBorderBrush(
  */
 fun Modifier.glass(
     shape: Shape = RoundedCornerShape(20.dp),
-    backgroundColor: Color = Color.White.copy(alpha = 0.07f),
+    backgroundColor: Color = Color.White.copy(alpha = 0.88f),
     borderWidth: Dp = 1.dp,
     topBorderAlpha: Float = 0.28f,
-    bottomBorderAlpha: Float = 0.06f
+    bottomBorderAlpha: Float = 0.08f
 ): Modifier = this
     .clip(shape)
     .background(backgroundColor, shape)
@@ -67,7 +69,7 @@ fun Modifier.glass(
     )
 
 /**
- * Fullscreen ambient backdrop with deep black and subtle ambient glass lighting.
+ * Fullscreen ambient backdrop with Green to White gradient.
  */
 @Composable
 fun GlassScaffoldBackground(
@@ -77,29 +79,37 @@ fun GlassScaffoldBackground(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(PureBlack)
-            .drawBehind {
-                // Subtle ambient radial glow in top center for glass refraction
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x18FFFFFF),
-                            Color(0x06FFFFFF),
-                            Color.Transparent
-                        ),
-                        center = Offset(size.width * 0.5f, size.height * 0.15f),
-                        radius = size.width * 0.85f
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFE8F5E9), // Soft Mint Top
+                        Color(0xFFFFFFFF), // Crisp White Center
+                        Color(0xFFF1F8F4)  // Subtle Green-White Base
                     )
                 )
-                // Subtle ambient radial glow in bottom right
+            )
+            .drawBehind {
+                // Subtle emerald radial glow top-center
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color(0x10FFFFFF),
+                            Color(0xFF10B981).copy(alpha = 0.12f),
+                            Color(0xFF34D399).copy(alpha = 0.04f),
                             Color.Transparent
                         ),
-                        center = Offset(size.width * 0.85f, size.height * 0.85f),
-                        radius = size.width * 0.6f
+                        center = Offset(size.width * 0.5f, size.height * 0.08f),
+                        radius = size.width * 0.9f
+                    )
+                )
+                // Subtle mint radial glow bottom-right
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFFA7F3D0).copy(alpha = 0.10f),
+                            Color.Transparent
+                        ),
+                        center = Offset(size.width * 0.9f, size.height * 0.85f),
+                        radius = size.width * 0.7f
                     )
                 )
             },
@@ -108,66 +118,71 @@ fun GlassScaffoldBackground(
 }
 
 /**
- * Frosted Glass Card container.
+ * Frosted glass card with standard border and elevation.
  */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(20.dp),
-    backgroundColor: Color = Color.White.copy(alpha = 0.07f),
+    backgroundColor: Color = Color.White.copy(alpha = 0.90f),
     borderWidth: Dp = 1.dp,
-    topBorderAlpha: Float = 0.25f,
-    bottomBorderAlpha: Float = 0.05f,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit
+    topBorderAlpha: Float = 0.28f,
+    bottomBorderAlpha: Float = 0.08f,
+    content: @Composable BoxScope.() -> Unit
 ) {
-    val baseModifier = modifier.glass(
-        shape = shape,
-        backgroundColor = backgroundColor,
-        borderWidth = borderWidth,
-        topBorderAlpha = topBorderAlpha,
-        bottomBorderAlpha = bottomBorderAlpha
+    Box(
+        modifier = modifier.glass(
+            shape = shape,
+            backgroundColor = backgroundColor,
+            borderWidth = borderWidth,
+            topBorderAlpha = topBorderAlpha,
+            bottomBorderAlpha = bottomBorderAlpha
+        ),
+        content = content
     )
-
-    if (onClick != null) {
-        Box(
-            modifier = baseModifier.clickable { onClick() }
-        ) {
-            content()
-        }
-    } else {
-        Box(modifier = baseModifier) {
-            content()
-        }
-    }
 }
 
 /**
- * Frosted Glass Badge / Chip.
+ * Interactive glass pill button with tactile touch feedback.
  */
 @Composable
-fun GlassBadge(
+fun GlassPillButton(
     text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    textColor: Color = TextPrimary,
-    backgroundColor: Color = Color.White.copy(alpha = 0.12f)
+    isActive: Boolean = false,
+    leadingIcon: (@Composable () -> Unit)? = null
 ) {
     Box(
         modifier = modifier
-            .glass(
-                shape = RoundedCornerShape(8.dp),
-                backgroundColor = backgroundColor,
-                borderWidth = 1.dp,
-                topBorderAlpha = 0.35f,
-                bottomBorderAlpha = 0.10f
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                if (isActive) Color(0xFF059669) else Color.White.copy(alpha = 0.80f),
+                RoundedCornerShape(24.dp)
             )
-            .padding(horizontal = 9.dp, vertical = 4.dp)
+            .border(
+                1.dp,
+                if (isActive) Color(0xFF047857) else Color(0x3310B981),
+                RoundedCornerShape(24.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+        contentAlignment = Alignment.Center
     ) {
-        androidx.compose.material3.Text(
-            text = text,
-            fontSize = 11.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-            color = textColor
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            leadingIcon?.let {
+                it()
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+            androidx.compose.material3.Text(
+                text = text,
+                color = if (isActive) Color.White else Color(0xFF064E3B),
+                fontSize = 13.sp,
+                fontWeight = if (isActive) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium
+            )
+        }
     }
 }

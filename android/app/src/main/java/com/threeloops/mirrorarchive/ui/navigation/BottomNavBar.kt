@@ -61,10 +61,10 @@ fun MirrorArchiveBottomBar(
                 .height(64.dp)
                 .glass(
                     shape = RoundedCornerShape(32.dp),
-                    backgroundColor = Color(0xF00E0E12),
+                    backgroundColor = Color(0xF7FFFFFF),
                     borderWidth = 1.dp,
                     topBorderAlpha = 0.35f,
-                    bottomBorderAlpha = 0.08f
+                    bottomBorderAlpha = 0.12f
                 )
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -81,11 +81,11 @@ fun MirrorArchiveBottomBar(
                 }
 
                 val iconColor by animateColorAsState(
-                    targetValue = if (isSelected) Color.White else Color(0xFF71717A),
+                    targetValue = if (isSelected) Color(0xFF059669) else Color(0xFF6B7280),
                     label = "iconColor"
                 )
                 val bgTabColor by animateColorAsState(
-                    targetValue = if (isSelected) Color.White.copy(alpha = 0.12f) else Color.Transparent,
+                    targetValue = if (isSelected) Color(0xFF10B981).copy(alpha = 0.14f) else Color.Transparent,
                     label = "bgTabColor"
                 )
 

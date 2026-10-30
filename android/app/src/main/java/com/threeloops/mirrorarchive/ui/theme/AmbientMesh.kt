@@ -12,40 +12,47 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /**
- * Spotify-inspired ambient mesh glow.
- * Renders a subtle radial mesh gradient at 12-16% opacity to give a rich,
- * deep frosted-glass aesthetic without neon "AI slop".
+ * Green to White ambient mesh glow.
+ * Renders an ethereal, premium gradient from mint/emerald to crisp white.
  */
 @Composable
 fun AmbientMeshBox(
     modifier: Modifier = Modifier,
-    meshColor: Color = Color(0xFF1E1E24), // Subtle dark ambient warm/charcoal
-    secondaryColor: Color = Color(0xFF121217),
+    meshColor: Color = Color(0xFF10B981), // Emerald glow
+    secondaryColor: Color = Color(0xFFA7F3D0), // Soft Mint
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF09090B)) // Obsidian pitch base
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFE8F5E9),
+                        Color(0xFFFFFFFF),
+                        Color(0xFFF7FCF9)
+                    )
+                )
+            )
             .drawBehind {
-                // Top center warm radial bloom
+                // Top center warm emerald radial bloom
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            meshColor.copy(alpha = 0.22f),
-                            secondaryColor.copy(alpha = 0.08f),
+                            meshColor.copy(alpha = 0.14f),
+                            secondaryColor.copy(alpha = 0.05f),
                             Color.Transparent
                         ),
-                        center = Offset(size.width * 0.5f, size.height * 0.10f),
+                        center = Offset(size.width * 0.5f, size.height * 0.08f),
                         radius = size.width * 0.95f
                     )
                 )
 
-                // Bottom right subtle ambient glow
+                // Bottom right subtle mint bloom
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color.White.copy(alpha = 0.04f),
+                            secondaryColor.copy(alpha = 0.12f),
                             Color.Transparent
                         ),
                         center = Offset(size.width * 0.9f, size.height * 0.85f),

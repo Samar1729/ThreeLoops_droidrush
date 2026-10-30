@@ -1,5 +1,9 @@
 package com.threeloops.mirrorarchive.ui.albums
 
+import android.content.Context
+import android.content.ContentValues
+import android.content.ContentUris
+import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.util.Log
@@ -7,12 +11,14 @@ import android.net.Uri
 import com.threeloops.mirrorarchive.contracts.AlbumSummary
 import com.threeloops.mirrorarchive.contracts.AlbumType
 import com.threeloops.mirrorarchive.contracts.ImageItem
+import com.threeloops.mirrorarchive.contracts.MediaRow
 import com.threeloops.mirrorarchive.contracts.ScanPhase
 import com.threeloops.mirrorarchive.contracts.ScanProgress
 import com.threeloops.mirrorarchive.contracts.ScanState
 import com.threeloops.mirrorarchive.data.repo.ImageRepository
 import com.threeloops.mirrorarchive.data.mediastore.MediaStoreDataSource
 import com.threeloops.mirrorarchive.data.mediastore.BitmapLoader
+import com.threeloops.mirrorarchive.work.IndexPipeline
 import com.threeloops.mirrorarchive.work.ScanController
 import com.threeloops.mirrorarchive.work.SyncUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,7 +58,8 @@ class AlbumsViewModel @Inject constructor(
     private val bitmapLoader: BitmapLoader,
     private val scanController: ScanController,
     private val syncUseCase: SyncUseCase,
-    private val database: AppDatabase
+    private val database: AppDatabase,
+    private val indexPipeline: IndexPipeline
 ) : ViewModel() {
 
     private val _devicePhotoCount = MutableStateFlow<Int?>(null)
@@ -60,7 +67,89 @@ class AlbumsViewModel @Inject constructor(
     private val _loaderProof = MutableStateFlow<String?>(null)
     val loaderProof = _loaderProof
 
+    val isImporting = MutableStateFlow(false)
+    val importMessage = MutableStateFlow<String?>(null)
+
     val selectedFilter = MutableStateFlow("All")
+
+    fun importPhoto(context: Context, sourceUri: Uri) {
+        viewModelScope.launch {
+            isImporting.value = true
+            importMessage.value = "Analyzing photo with on-device ML & OCR..."
+            try {
+                val mediaRow = withContext(Dispatchers.IO) {
+                    val time = System.currentTimeMillis()
+                    val fileName = "imported_photo_${time}.jpg"
+
+                    val values = ContentValues().apply {
+                        put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                        put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/Camera")
+                        put(MediaStore.Images.Media.DATE_ADDED, time / 1000L)
+                        put(MediaStore.Images.Media.DATE_TAKEN, time)
+                    }
+
+                    val destUri = try {
+                        context.contentResolver.insert(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            values
+                        ) ?: sourceUri
+                    } catch (e: Exception) {
+                        sourceUri
+                    }
+
+                    if (destUri != sourceUri) {
+                        try {
+                            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                                context.contentResolver.openOutputStream(destUri)?.use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.w("AlbumsViewModel", "Could not copy to MediaStore URI, using sourceUri", e)
+                        }
+                    }
+
+                    val mediaId = try {
+                        ContentUris.parseId(destUri)
+                    } catch (e: Exception) {
+                        time
+                    }
+
+                    MediaRow(
+                        mediaId = mediaId,
+                        uri = destUri,
+                        displayName = fileName,
+                        relativePath = "DCIM/Camera/",
+                        dateAdded = time / 1000L,
+                        dateTaken = time,
+                        generationModified = 1L,
+                        width = 1920,
+                        height = 1080,
+                        sizeBytes = 1024L * 1024L,
+                        mimeType = "image/jpeg"
+                    )
+                }
+
+                val indexed = indexPipeline.processOne(mediaRow)
+                if (indexed != null) {
+                    repository.saveBatch(listOf(indexed), checkpointId = mediaRow.mediaId)
+                    _devicePhotoCount.value = (_devicePhotoCount.value ?: 0) + 1
+                    val ocrLen = indexed.ocrText?.length ?: 0
+                    val faceCount = indexed.faceCount
+                    val labelCount = indexed.labels.size
+                    importMessage.value = "Analyzed! $labelCount tags, $faceCount faces, OCR: $ocrLen chars"
+                } else {
+                    importMessage.value = "Processing completed."
+                }
+            } catch (e: Exception) {
+                Log.e("AlbumsViewModel", "Failed to import photo", e)
+                importMessage.value = "Import error: ${e.message}"
+            } finally {
+                isImporting.value = false
+            }
+        }
+    }
 
     init {
         viewModelScope.launch {
